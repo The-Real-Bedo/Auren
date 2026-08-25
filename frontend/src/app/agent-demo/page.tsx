@@ -106,7 +106,7 @@ export default function AgentDemoPage() {
   const [maxSponsoredGas, setMaxSponsoredGas] = useState<string>('0.01');
 
   // Purchase Amount (Testnet native USDC)
-  const [purchaseAmount, setPurchaseAmount] = useState<string>('0.05');
+  const [purchaseAmount, setPurchaseAmount] = useState<string>('0.001');
 
   // Real Execution Result
   const [executionResult, setExecutionResult] = useState<LiveERC4337Result | null>(null);
@@ -338,6 +338,21 @@ export default function AgentDemoPage() {
         : ethers.concat([arcConfig.accountFactory, factoryInterface.encodeFunctionData('createAccount', [account, 0])]);
 
       const purchaseValue = ethers.parseEther(purchaseAmount);
+
+      // Verify Smart Account has required funds to execute purchaseItem{value: purchaseValue}
+      if (purchaseValue > 0n) {
+        const saBal = await arcRpcProvider.getBalance(sa);
+        if (saBal < purchaseValue) {
+          setStepDetail(`Pre-funding Smart Account (${ethers.formatEther(purchaseValue)} USDC) from connected wallet...`);
+          const signer = await provider.getSigner();
+          const fundTx = await signer.sendTransaction({
+            to: sa,
+            value: purchaseValue
+          });
+          await fundTx.wait(1);
+        }
+      }
+
       const executeCallData = accountInterface.encodeFunctionData('execute', [
         arcConfig.demoDApp,
         purchaseValue,
@@ -418,7 +433,8 @@ export default function AgentDemoPage() {
       });
       const submitData = await submitRes.json();
       if (!submitRes.ok || !submitData.success) {
-        throw new Error(submitData.error || 'Failed to submit UserOperation via Relayer');
+        const detail = submitData.revertReason ? `: ${submitData.revertReason}` : (submitData.error ? `: ${submitData.error}` : '');
+        throw new Error(`Relayer execution failed${detail}`);
       }
 
       // ── STEP 6: SETTLING & ON-CHAIN VERIFICATION ───────────

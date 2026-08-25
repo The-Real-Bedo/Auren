@@ -71,12 +71,17 @@ lerna-debug.log*
 # 5. TypeScript, Build Outputs & Maps
 # ------------------------------------------------------------------------------
 dist/
-build/
+/build/
 *.tsbuildinfo
 *.map
 agent/dist/
+agent/build/
 backend/dist/
+backend/build/
 sdk/dist/
+sdk/build/
+frontend/build/
+!frontend/src/app/build/
 
 # ------------------------------------------------------------------------------
 # 6. Next.js & Frontend Artifacts

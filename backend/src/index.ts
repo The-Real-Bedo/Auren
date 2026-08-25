@@ -67,7 +67,9 @@ const ENTRY_POINT_ABI = [
   'function getNonce(address,uint192) view returns (uint256)',
   'function getUserOpHash(tuple(address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp) view returns (bytes32)',
   'function handleOps(tuple(address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature)[] ops, address payable beneficiary) external',
-  'function balanceOf(address) view returns (uint256)'
+  'function balanceOf(address) view returns (uint256)',
+  'error FailedOp(uint256 opIndex, string reason)',
+  'error ExecutionResult(uint256 preOpGas, uint256 paid, uint48 validAfter, uint48 validUntil, bool targetSuccess, bytes targetResult)'
 ];
 
 // ── Discovery Endpoints ────────────────────────────────────
@@ -223,10 +225,20 @@ app.post('/agent/submit-userop', async (req: Request, res: Response): Promise<an
     try {
       await entryPoint.handleOps.staticCall([formattedUserOp], relayerSigner.address);
     } catch (simError: any) {
-      console.warn(`Relayer: Pre-simulation failed for UserOp ${userOpHash}:`, simError.reason || simError.message);
+      let decodedReason = simError.reason || simError.shortMessage || simError.message || 'Simulation reverted';
+      try {
+        const errData = simError.data || (simError.error && (simError.error.data || simError.error.error?.data));
+        if (errData && typeof errData === 'string') {
+          const parsed = entryPoint.interface.parseError(errData);
+          if (parsed && parsed.name === 'FailedOp') {
+            decodedReason = `EntryPoint FailedOp: ${parsed.args[1]}`;
+          }
+        }
+      } catch (_) {}
+      console.warn(`Relayer: Pre-simulation failed for UserOp ${userOpHash}:`, decodedReason);
       return res.status(400).json({
         error: 'UserOperation pre-simulation failed on EntryPoint',
-        revertReason: simError.reason || simError.message || 'Simulation reverted',
+        revertReason: decodedReason,
         userOpHash
       });
     }
