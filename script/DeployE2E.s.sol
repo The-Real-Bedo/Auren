@@ -12,12 +12,12 @@ contract DeployE2E is Script {
 
         MockEntryPointStub entryPoint = new MockEntryPointStub();
         address verifyingSigner = vm.addr(deployerPrivateKey);
-        
+
         MudarabahVaultFactory factory = new MudarabahVaultFactory(entryPoint, verifyingSigner);
         (address v, address p, address s) = factory.createVault(5000);
-        
+
         DAppVault(payable(v)).deposit{value: 1000e18}();
-        
+
         console.log("EntryPoint:", address(entryPoint));
         console.log("Factory:", address(factory));
         console.log("Vault:", v);

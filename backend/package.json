@@ -1,13 +1,15 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Auren Protocol Backend & Policy Engine Service",
   "main": "dist/src/index.js",
   "scripts": {
+    "build:deps": "cd ../sdk && npm install && npm run build && cd ../agent && npm install && npm run build",
     "build": "tsc",
     "start": "node dist/src/index.js",
     "dev": "ts-node src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc && node dist/test.js && node dist/test/adversarial.test.js",
+    "test:adversarial": "tsc && node dist/test/adversarial.test.js"
   },
   "keywords": [],
   "author": "",

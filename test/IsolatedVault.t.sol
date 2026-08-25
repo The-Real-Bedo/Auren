@@ -16,7 +16,7 @@ abstract contract MockEntryPoint is IEntryPoint {
         (bool success, ) = withdrawAddress.call{value: withdrawAmount}("");
         require(success, "ETH transfer failed");
     }
-    
+
     // Stubs for IEntryPoint
     function handleOps(UserOperation[] calldata, address payable) external {}
     function handleAggregatedOps(UserOpsPerAggregator[] calldata, address payable) external {}
@@ -30,10 +30,10 @@ abstract contract MockEntryPoint is IEntryPoint {
 contract IsolatedVaultTest is Test {
     MockEntryPoint entryPoint;
     MudarabahVaultFactory factory;
-    
+
     address verifyingSigner = address(100);
     address developer = address(101);
-    
+
     DAppVault vault;
     InvestmentPaymaster paymaster;
     RevenueSplitter splitter;
@@ -41,41 +41,41 @@ contract IsolatedVaultTest is Test {
     function setUp() public {
         entryPoint = new MockEntryPointStub();
         factory = new MudarabahVaultFactory(entryPoint, verifyingSigner);
-        
+
         vm.prank(developer);
         (address v, address p, address s) = factory.createVault(5000); // 50% split
         vault = DAppVault(payable(v));
         paymaster = InvestmentPaymaster(payable(p));
         splitter = RevenueSplitter(s);
-        
+
         vm.deal(address(entryPoint), 100000 ether);
     }
-    
+
     function testFuzz_Cycle(uint256 depositAmt, uint256 gasDeployed, uint256 revenue) public {
         depositAmt = bound(depositAmt, 100, 1000000 ether);
         gasDeployed = bound(gasDeployed, 1, depositAmt);
         revenue = bound(revenue, 1, 2000000 ether);
-        
+
         address lp = address(102);
         vm.deal(lp, depositAmt);
-        
+
         vm.prank(lp);
         vault.deposit{value: depositAmt}();
-        
+
         vm.prank(address(paymaster));
         vault.deployCapital(gasDeployed);
-        
+
         assertEq(vault.unrecoveredCapital(), gasDeployed);
-        
+
         vm.deal(address(this), revenue);
         splitter.processPayment{value: revenue}();
-        
+
         if (revenue <= gasDeployed) {
             assertEq(vault.unrecoveredCapital(), gasDeployed - revenue);
         } else {
             assertEq(vault.unrecoveredCapital(), 0);
         }
-        
+
         uint256 finalBalance = address(vault).balance;
         uint256 epBalance = entryPoint.balanceOf(address(paymaster));
         assertEq(vault.totalValue(), finalBalance + epBalance);

@@ -5,6 +5,7 @@ import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import "account-abstraction/interfaces/IEntryPoint.sol";
 import "./Interfaces.sol";
+import "./InvestmentPaymaster.sol";
 
 contract DAppVault is ReentrancyGuard {
     IEntryPoint public immutable entryPoint;
@@ -12,18 +13,20 @@ contract DAppVault is ReentrancyGuard {
     address public paymaster;
     address public splitter;
     address public factory;
-    
+
     uint256 public immutable lpProfitShareBps;
-    
-    uint256 public totalGasDeployed;   
-    uint256 public totalCapitalRecovered;   
-    
+
+    uint256 public totalGasDeployed;
+    uint256 public totalCapitalRecovered;
+
     uint256 public totalSupplyShares;
     mapping(address => uint256) public lpShares;
 
     event Deposited(address indexed lp, uint256 usdcAmount, uint256 sharesIssued);
     event Withdrawn(address indexed lp, uint256 usdcAmount, uint256 sharesBurned);
     event CapitalDeployed(uint256 amount);
+    event GasSpentRecorded(uint256 actualGasCost, uint256 totalGasDeployed);
+    event DepositReclaimed(address indexed to, uint256 amount);
     event RevenueProcessed(uint256 totalAmount, uint256 capitalRecovery, uint256 vaultProfit, uint256 devProfit);
 
     error ZeroAmount();
@@ -32,7 +35,7 @@ contract DAppVault is ReentrancyGuard {
     error AlreadyInitialized();
 
     constructor(
-        IEntryPoint _entryPoint, 
+        IEntryPoint _entryPoint,
         address _developer,
         uint256 _lpProfitShareBps
     ) {
@@ -45,7 +48,7 @@ contract DAppVault is ReentrancyGuard {
     function setInfrastructure(address _paymaster, address _splitter) external {
         if (msg.sender != factory) revert Unauthorized();
         if (paymaster != address(0)) revert AlreadyInitialized();
-        
+
         paymaster = _paymaster;
         splitter = _splitter;
     }
@@ -70,7 +73,7 @@ contract DAppVault is ReentrancyGuard {
         if (amount == 0) revert ZeroAmount();
 
         uint256 _totalValue = totalValue() - amount; // subtract just deposited value for ratio
-        
+
         if (totalSupplyShares == 0) {
             shares = amount;
             totalSupplyShares += 1000;
@@ -91,7 +94,7 @@ contract DAppVault is ReentrancyGuard {
 
         uint256 _totalValue = totalValue();
         uint256 _totalSupply = totalSupplyShares;
-        
+
         amount = (shares * _totalValue) / _totalSupply;
 
         if (address(this).balance < amount) revert InsufficientLiquidity();
@@ -105,46 +108,70 @@ contract DAppVault is ReentrancyGuard {
         emit Withdrawn(msg.sender, amount, shares);
     }
 
-    function deployCapital(uint256 amount) external nonReentrant {
-        if (msg.sender != paymaster) revert Unauthorized();
+    function deployCapital(uint256 amount) public nonReentrant {
+        if (msg.sender != paymaster && msg.sender != developer) revert Unauthorized();
         if (amount == 0) revert ZeroAmount();
         if (address(this).balance < amount) revert InsufficientLiquidity();
 
         totalGasDeployed += amount;
-        
         entryPoint.depositTo{value: amount}(paymaster);
 
         emit CapitalDeployed(amount);
+    }
+
+    function fundPaymasterDeposit(uint256 amount) external {
+        deployCapital(amount);
+    }
+
+    function reconcileGasSpent(uint256 actualCost, uint256 reservedCost) external nonReentrant {
+        if (msg.sender != paymaster) revert Unauthorized();
+        if (reservedCost > actualCost) {
+            uint256 unused = reservedCost - actualCost;
+            if (totalGasDeployed >= unused) {
+                totalGasDeployed -= unused;
+            }
+        }
+        emit GasSpentRecorded(actualCost, totalGasDeployed);
+    }
+
+    function reclaimPaymasterDeposit(uint256 amount) external nonReentrant {
+        if (msg.sender != developer && msg.sender != factory) revert Unauthorized();
+        if (paymaster == address(0)) revert Unauthorized();
+        InvestmentPaymaster(payable(paymaster)).withdrawDepositToVault(amount);
+        if (totalGasDeployed >= amount) {
+            totalGasDeployed -= amount;
+        }
+        emit DepositReclaimed(address(this), amount);
     }
 
     function processRevenue() external payable nonReentrant {
         if (msg.sender != splitter) revert Unauthorized();
         uint256 amount = msg.value;
         if (amount == 0) revert ZeroAmount();
-        
+
         uint256 unrecovered = unrecoveredCapital();
         uint256 capitalRecovery = 0;
         uint256 netProfit = 0;
-        
+
         if (amount <= unrecovered) {
             capitalRecovery = amount;
         } else {
             capitalRecovery = unrecovered;
             netProfit = amount - unrecovered;
         }
-        
+
         totalCapitalRecovered += capitalRecovery;
-        
+
         uint256 vaultProfit = (netProfit * lpProfitShareBps) / 10000;
         uint256 devProfit = netProfit - vaultProfit;
-        
+
         if (devProfit > 0) {
             (bool success,) = developer.call{value: devProfit}("");
             require(success, "Dev transfer failed");
         }
-        
+
         emit RevenueProcessed(amount, capitalRecovery, vaultProfit, devProfit);
     }
-    
+
     receive() external payable {}
 }

@@ -86,11 +86,13 @@ frontend/.next/
 frontend/out/
 
 # ------------------------------------------------------------------------------
-# 7. Testing & Coverage
+# 7. Testing, State & Coverage
 # ------------------------------------------------------------------------------
 coverage/
 *.lcov
 .nyc_output/
+.auren_*.json
+backend/.auren_*.json
 
 # ------------------------------------------------------------------------------
 # 8. Local Media & Render Exports

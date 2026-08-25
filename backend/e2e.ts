@@ -5,25 +5,25 @@ import { app } from './src/index';
 
 async function runE2E() {
     console.log("🚀 Starting E2E Demo...");
-    
+
     // 1. Start Anvil in background (or assume it's running for the test)
     // For this test, we will just spawn it, or run forge script directly if it spawns a local evm
     // We will deploy the contracts using Anvil
     console.log("📦 Deploying contracts to local Anvil node...");
-    
+
     // Clean and build to ensure fresh state
     execSync('cd .. && ~/.foundry/bin/forge build', { stdio: 'ignore' });
-    
+
     // We will use the anvil node if we start it, but let's just launch anvil as a child process
     const { spawn } = require('child_process');
     const anvil = spawn('~/.foundry/bin/anvil', [], { shell: true });
-    
+
     // wait for anvil to start
     await new Promise(r => setTimeout(r, 2000));
-    
+
     try {
         const output = execSync('cd .. && ~/.foundry/bin/forge script script/DeployE2E.s.sol --rpc-url http://127.0.0.1:8545 --broadcast').toString();
-        
+
         const extractAddress = (key: string) => {
             const match = output.match(new RegExp(`${key}: (0x[a-fA-F0-9]{40})`));
             return match ? match[1] : '';
@@ -34,7 +34,7 @@ async function runE2E() {
         const FACTORY = extractAddress('Factory');
         const VAULT = extractAddress('Vault');
         const PAYMASTER = extractAddress('Paymaster');
-        
+
         console.log(`✅ Deployed Vault: ${VAULT}`);
         console.log(`✅ Deployed Paymaster: ${PAYMASTER}`);
 
@@ -75,9 +75,9 @@ async function runE2E() {
                 vaultAddress: VAULT,
                 chainId: 31337 // Anvil default chainId
             });
-            
+
         if (res.status !== 200) throw new Error("Sponsorship failed: " + JSON.stringify(res.body));
-        
+
         console.log("✅ Backend validated policy and signed UserOp!");
         console.log("📝 paymasterAndData:", res.body.paymasterAndData);
 
@@ -87,9 +87,9 @@ async function runE2E() {
         const paymasterAbi = [
             "function validatePaymasterUserOp(tuple(address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature) userOp, bytes32 userOpHash, uint256 maxCost) external returns (bytes context, uint256 validationData)"
         ];
-        
+
         const paymasterContract = new ethers.Contract(PAYMASTER, paymasterAbi, signer);
-        
+
         const fullUserOp = {
             sender: userOp.sender,
             nonce: userOp.nonce,
@@ -103,7 +103,7 @@ async function runE2E() {
             paymasterAndData: res.body.paymasterAndData,
             signature: "0x"
         };
-        
+
         // Generate the hash that EntryPoint would generate
         const abiCoder = new ethers.AbiCoder();
         const hash = ethers.keccak256(abiCoder.encode(
@@ -113,20 +113,20 @@ async function runE2E() {
 
         // Let's impersonate the EntryPoint to call validatePaymasterUserOp
         const data = paymasterContract.interface.encodeFunctionData("validatePaymasterUserOp", [fullUserOp, hash, userOp.maxCost]);
-        
+
         await provider.send("anvil_impersonateAccount", [ENTRY_POINT]);
-        
+
         // In anvil, we can impersonate accounts easily
         await provider.send("anvil_impersonateAccount", [ENTRY_POINT]);
         await provider.send("anvil_setBalance", [ENTRY_POINT, "0x1000000000000000000"]);
-        
+
         const epSigner = await provider.getSigner(ENTRY_POINT);
         const epPaymasterContract = new ethers.Contract(PAYMASTER, paymasterAbi, epSigner);
-        
+
         const validationResult = await epPaymasterContract.validatePaymasterUserOp.staticCall(fullUserOp, hash, userOp.maxCost);
-        
+
         console.log("✅ EntryPoint validation result (0 means success):", validationResult[1].toString());
-        
+
         if (validationResult[1].toString() !== "0") {
             throw new Error("Signature validation failed on-chain!");
         }

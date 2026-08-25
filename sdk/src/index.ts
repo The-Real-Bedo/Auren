@@ -27,12 +27,12 @@ export class PerpetuaSDK {
         this.factoryAddress = config.factoryAddress;
         this.provider = config.provider;
         this.signer = config.signer;
-        
+
         const runner = this.signer || this.provider;
         if (!runner) {
             throw new Error("Must provide either a provider or a signer");
         }
-        
+
         this.factoryContract = new Contract(this.factoryAddress, factoryAbi, runner);
     }
 
@@ -53,7 +53,7 @@ export class PerpetuaSDK {
 
         const tx = await this.factoryContract.createVault(lpProfitShareBps);
         const receipt = await tx.wait();
-        
+
         let vaultAddress, paymasterAddress, splitterAddress;
         if (receipt && receipt.logs) {
             for (const log of receipt.logs) {
@@ -80,7 +80,7 @@ export class PerpetuaSDK {
     public async getVaultStats(vaultAddress: string): Promise<VaultStats> {
         const runner = this.signer || this.provider;
         const vault = new Contract(vaultAddress, vaultAbi, runner);
-        
+
         const [totalValue, unrecoveredCapital, totalGasDeployed, totalSupplyShares] = await Promise.all([
             vault.totalValue(),
             vault.unrecoveredCapital(),
@@ -106,16 +106,27 @@ export class PerpetuaSDK {
     ): Promise<string> {
         if (!this.signer) throw new Error("Signer required");
 
+        let maxCost = userOp.maxCost;
+        if (maxCost === undefined && userOp.callGasLimit !== undefined && userOp.maxFeePerGas !== undefined) {
+            const callGas = BigInt(userOp.callGasLimit || 0);
+            const verGas = BigInt(userOp.verificationGasLimit || 0);
+            const preGas = BigInt(userOp.preVerificationGas || 0);
+            const maxFee = BigInt(userOp.maxFeePerGas || 0);
+            maxCost = (callGas + verGas * 3n + preGas) * maxFee;
+        } else {
+            maxCost = BigInt(maxCost || 0);
+        }
+
         // The hash structure matching the contract's `validatePaymasterUserOp`
         const abiCoder = new ethers.AbiCoder();
         const hash = ethers.keccak256(abiCoder.encode(
             ["address", "uint256", "bytes32", "uint256", "uint256"],
-            [userOp.sender, userOp.nonce, ethers.keccak256(userOp.callData), userOp.maxCost || 0, chainId]
+            [userOp.sender, userOp.nonce, ethers.keccak256(userOp.callData), maxCost, chainId]
         ));
 
         // Sign the hash (verifying signer)
         const signature = await this.signer.signMessage(ethers.getBytes(hash));
-        
+
         // paymasterAndData = paymasterAddress (20 bytes) + signature (65 bytes)
         return ethers.concat([paymasterAddress, signature]);
     }

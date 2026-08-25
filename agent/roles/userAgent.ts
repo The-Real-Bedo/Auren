@@ -12,7 +12,7 @@ const DAPP_ABI = ['function purchaseItem() external payable'];
 
 /**
  * TechnoCore User Agent — End-to-End Real Flow
- * 
+ *
  * Flow:
  * 1. Initializes with cryptographic did:key identity.
  * 2. Discovers Auren capabilities & registered Arc DApps.

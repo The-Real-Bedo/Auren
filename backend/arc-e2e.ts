@@ -8,7 +8,7 @@ async function runE2E() {
     const deployerPk = process.env.DEPLOYER_PRIVATE_KEY!;
     const provider = new ethers.JsonRpcProvider(process.env.ARC_RPC_URL);
     const userWallet = new ethers.Wallet(deployerPk, provider);
-    
+
     const VAULT = "0x851bD1E5d9CdeD0f183e861dB98157641C826a74";
     const PAYMASTER = "0x2a4122372B1A624118Ee3e7D4503B9525CfDE076";
     const ENTRY_POINT = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
@@ -33,7 +33,7 @@ async function runE2E() {
     const dappAbi = ["function purchaseItem() external payable"];
     const dappInterface = new ethers.Interface(dappAbi);
     const callData = dappInterface.encodeFunctionData("purchaseItem");
-    
+
     const userOp = {
         sender: userWallet.address, // Mock sender since we aren't executing handleOps
         nonce: Math.floor(Math.random() * 1000000),
@@ -61,7 +61,7 @@ async function runE2E() {
     console.log("Transaction Hash:", tx.hash);
     await tx.wait();
     console.log("✅ Purchase Successful!");
-    
+
     // Check Vault Accounting
     const vaultAbi = [
         "function unrecoveredCapital() external view returns (uint256)",
@@ -74,14 +74,14 @@ async function runE2E() {
     const recovered = await vaultContract.totalCapitalRecovered();
     const profit = await vaultContract.totalRealizedProfit();
     const total = await vaultContract.totalValue();
-    
+
     console.log(`Vault Accounting:
       Total Value: ${ethers.formatEther(total)} USDC
       Unrecovered: ${ethers.formatEther(unrecovered)} USDC
       Recovered: ${ethers.formatEther(recovered)} USDC
       Realized Profit: ${ethers.formatEther(profit)} USDC
     `);
-    
+
     process.exit(0);
 }
 

@@ -27,12 +27,12 @@ export class PerpetuaSDK {
         this.factoryAddress = config.factoryAddress;
         this.provider = config.provider;
         this.signer = config.signer;
-        
+
         const runner = this.signer || this.provider;
         if (!runner) {
             throw new Error("Must provide either a provider or a signer");
         }
-        
+
         this.factoryContract = new Contract(this.factoryAddress, factoryAbi, runner);
     }
 
@@ -53,7 +53,7 @@ export class PerpetuaSDK {
 
         const tx = await this.factoryContract.createVault(lpProfitShareBps);
         const receipt = await tx.wait();
-        
+
         let vaultAddress, paymasterAddress, splitterAddress;
         if (receipt && receipt.logs) {
             for (const log of receipt.logs) {
@@ -80,7 +80,7 @@ export class PerpetuaSDK {
     public async getVaultStats(vaultAddress: string): Promise<VaultStats> {
         const runner = this.signer || this.provider;
         const vault = new Contract(vaultAddress, vaultAbi, runner);
-        
+
         const [totalValue, unrecoveredCapital, totalGasDeployed, totalSupplyShares] = await Promise.all([
             vault.totalValue(),
             vault.unrecoveredCapital(),
@@ -115,7 +115,7 @@ export class PerpetuaSDK {
 
         // Sign the hash (verifying signer)
         const signature = await this.signer.signMessage(ethers.getBytes(hash));
-        
+
         // paymasterAndData = paymasterAddress (20 bytes) + signature (65 bytes)
         return ethers.concat([paymasterAddress, signature]);
     }

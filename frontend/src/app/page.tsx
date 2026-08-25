@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 
 /* ── Custom SVG Logo ────────────────────────────────────────── */
 export function LogoMark({ size = 28 }: { size?: number }) {
@@ -19,435 +20,404 @@ export function LogoMark({ size = 28 }: { size?: number }) {
   );
 }
 
-/* ── 5-Step Visual Flow ─────────────────────────────────────── */
+/* ── Primary 5-Step Loop ────────────────────────────────────── */
 const FLOW_STEPS = [
   {
     step: '01',
     name: 'Discover',
-    title: 'Agent Discovery',
-    body: 'TechnoCore agent discovers active Arc DApps through Auren directory & MCP tools.',
+    title: 'Autonomous Discovery',
+    body: 'Autonomous agents and clients query registered Arc ventures through the Auren registry and MCP tools.',
   },
   {
     step: '02',
     name: 'Evaluate',
-    title: 'Policy Evaluation',
-    body: 'Auren Policy Engine evaluates whitelist, gas bounds, and daily venture budget.',
+    title: 'Policy Engine Check',
+    body: 'Policy engine validates gas limits, contract whitelists, allowed function selectors, and daily budgets.',
   },
   {
     step: '03',
     name: 'Sponsor',
-    title: 'Intent Authorization',
-    body: 'Agent signs with did:key; Auren generates bounded Paymaster authorization.',
+    title: 'Paymaster Authorization',
+    body: 'Auren Paymaster signs cryptographic authorization envelopes (ERC-4337 v0.6) without user gas.',
   },
   {
     step: '04',
     name: 'Execute',
     title: 'On-Chain Execution',
-    body: 'Transaction executes on Arc Testnet with gas covered from isolated DAppVault.',
+    body: 'Relayers broadcast UserOperations to EntryPoint; transactions settle atomically on Arc Testnet.',
   },
   {
     step: '05',
     name: 'Settle',
-    title: 'Revenue Distribution',
-    body: 'Capital recovered first from top-line revenue before profit-sharing commences.',
+    title: 'Revenue-First Settlement',
+    body: 'DApp revenue flows to isolated vaults, recovering initial gas capital before distributing profit splits.',
   },
 ];
 
-/* ── Verified Live Arc Data ─────────────────────────────────── */
-const VERIFIED_TX = {
-  hash: '0xb9f95b44bf960be101c43ef1ea568e8a062530387a4275de355a0afa6110a2d4',
-  block: '58665142',
-  gasUsed: '69,201',
-  actionValue: '5.00 USDC',
-  tvlBefore: '30.00 USDC',
-  tvlAfter: '32.50 USDC',
-  agentDid: 'did:key:z6MkreBJ7AT22iSUZNHKn4nC1uyao8Sb4mDK8cRePdFBjigt',
-};
+/* ── 3-Audience Profiles ────────────────────────────────────── */
+const AUDIENCES = [
+  {
+    id: 'users',
+    title: 'For Users',
+    subtitle: 'Zero-Friction Applications',
+    summary: 'Interact with applications without buying or holding transaction gas tokens for every single action.',
+    points: [
+      'Zero gas friction on eligible actions',
+      'Non-custodial: you maintain 100% control of your wallet',
+      'Transparent on-chain execution with zero hidden costs',
+    ],
+    cta: 'Explore User Experience',
+    href: '/users',
+  },
+  {
+    id: 'developers',
+    title: 'For Developers',
+    subtitle: 'Accelerate DApp Onboarding',
+    summary: 'Integrate Paymasters and isolated liquidity to sponsor activity and automate top-line revenue settlement.',
+    points: [
+      'Plug-and-play TypeScript SDK & ERC-4337 Paymaster',
+      'Configurable per-action gas rules & daily budgets',
+      'Automated 50/50 profit splits via RevenueSplitter',
+    ],
+    cta: 'Developer Quickstart',
+    href: '/build',
+  },
+  {
+    id: 'capital',
+    title: 'For Capital Providers',
+    subtitle: 'Venture Liquidity & Growth',
+    summary: 'Supply capital into isolated vaults to sponsor application activity with revenue-first principal recovery.',
+    points: [
+      'Isolated risk per DApp (no cross-pool contagion)',
+      'Principal recovery before profit distribution (Mudarabah-inspired)',
+      'Real-time on-chain accounting and TVL telemetry',
+    ],
+    cta: 'Explore Capital Vaults',
+    href: '/capital',
+  },
+];
 
-/* ── Component ─────────────────────────────────────────────── */
-export default function HomePage() {
+export default function Home() {
+  const [selectedAudience, setSelectedAudience] = useState<'users' | 'developers' | 'capital'>('users');
+  const activeAudience = AUDIENCES.find((a) => a.id === selectedAudience) || AUDIENCES[0];
+
   return (
-    <>
-      {/* ═══════════════════════════════════════════ HERO SECTION */}
+    <div style={{ background: '#0A0D14', color: '#F8F6F2', minHeight: '100vh', overflowX: 'hidden' }}>
+
+      {/* ── HERO SECTION ────────────────────────────────────────── */}
       <section
-        className="hero"
         style={{
-          paddingTop: '7.5rem',
-          paddingBottom: '4.5rem',
-          minHeight: '94vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
           position: 'relative',
+          paddingTop: '8rem',
+          paddingBottom: '5rem',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          backgroundImage: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(200,149,58,0.12), transparent)',
         }}
       >
-        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          {/* Badges */}
-          <div className="anim-fade-up" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-            <span className="badge badge-arc">
-              <span className="dot-live" style={{ background: '#4A5AD8', animation: 'none' }} />
-              Live on Arc Testnet
-            </span>
-            <span className="badge badge-gold">
-              TechnoCore Integration Live
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem', textAlign: 'center' }}>
+
+          {/* Status Badge */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.85rem', borderRadius: '999px', background: 'rgba(200,149,58,0.12)', border: '1px solid rgba(200,149,58,0.3)', marginBottom: '1.75rem' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#C8953A', boxShadow: '0 0 8px #C8953A' }} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.08em', color: '#C8953A' }}>
+              PUBLIC TESTNET — ARC NETWORK (CHAIN 5042002)
             </span>
           </div>
 
-          {/* Headline */}
-          <div style={{ maxWidth: 880, marginBottom: '1.75rem' }}>
-            <h1
-              className="text-display-xl anim-fade-up d-1"
-              style={{ color: '#F8F6F2', margin: 0, lineHeight: 1.05 }}
-            >
-              The economic layer for
-            </h1>
-            <h1
-              className="text-display-xl anim-fade-up d-2"
+          {/* Main Title */}
+          <h1
+            style={{
+              fontSize: 'clamp(2.5rem, 5.5vw, 4.2rem)',
+              fontWeight: 800,
+              lineHeight: 1.1,
+              letterSpacing: '-0.03em',
+              marginBottom: '1.25rem',
+              color: '#F8F6F2',
+            }}
+          >
+            The economic layer for <br />
+            <span
               style={{
-                color: 'var(--color-gold)',
-                margin: 0,
-                lineHeight: 1.05,
+                background: 'linear-gradient(135deg, #C8953A 0%, #E2B768 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
               }}
             >
               autonomous applications.
-            </h1>
-          </div>
+            </span>
+          </h1>
 
-          {/* Subtitle & Tagline */}
+          {/* Tagline & Elevator Pitch */}
           <p
-            className="anim-fade-up d-3"
             style={{
               fontSize: '1.25rem',
               fontWeight: 500,
-              lineHeight: 1.6,
-              color: 'rgba(248,246,242,0.85)',
+              color: '#C8953A',
               marginBottom: '0.75rem',
             }}
           >
             Fund growth. Enable agents.
           </p>
+
           <p
-            className="anim-fade-up d-3"
             style={{
-              fontSize: '1rem',
-              lineHeight: 1.65,
-              color: 'rgba(248,246,242,0.5)',
-              maxWidth: 620,
-              margin: '0 0 2.5rem 0',
+              fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
+              lineHeight: 1.6,
+              color: '#8A8F9E',
+              maxWidth: 760,
+              margin: '0 auto 2.5rem auto',
             }}
           >
-            Auren enables capital providers to fund user and AI-agent transaction budgets.
-            TechnoCore agents discover, evaluate, and execute sponsored actions on Arc,
-            while revenue recovers capital first before profit-sharing begins.
+            Auren helps applications on Arc sponsor user and agent activity while enforcing economic policies, funding growth through isolated vaults, and settling generated revenue on-chain.
           </p>
 
-          {/* CTAs */}
-          <div
-            className="anim-fade-up d-4"
-            style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '4rem' }}
-          >
-            <Link href="/agent-demo" className="btn btn-gold btn-lg">
-              ▶ Watch an Agent Execute
+          {/* Primary Action Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <Link
+              href="/agent-demo"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.85rem 1.75rem',
+                borderRadius: '8px',
+                background: '#C8953A',
+                color: '#0A0D14',
+                fontWeight: 700,
+                fontSize: '0.98rem',
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(200,149,58,0.3)',
+                transition: 'transform 0.2s, opacity 0.2s',
+              }}
+            >
+              Watch an Agent Execute
+              <span>→</span>
             </Link>
-            <Link href="/build" className="btn btn-outline-white btn-lg">
+
+            <Link
+              href="/build"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '0.85rem 1.75rem',
+                borderRadius: '8px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#F8F6F2',
+                fontWeight: 600,
+                fontSize: '0.98rem',
+                textDecoration: 'none',
+                transition: 'background 0.2s',
+              }}
+            >
               Build with Auren
             </Link>
           </div>
 
-          {/* 5-Step Visual Flow Strip */}
+        </div>
+      </section>
+
+      {/* ── 3-AUDIENCE SELECTOR ─────────────────────────────────── */}
+      <section style={{ padding: '4.5rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#0D111A' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+
+          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
+              Built for the Entire Autonomous Ecosystem
+            </h2>
+            <p style={{ color: '#8A8F9E', fontSize: '0.98rem' }}>
+              Select your perspective to see how Auren unlocks economic coordination on Arc.
+            </p>
+          </div>
+
+          {/* Tab Controls */}
           <div
-            className="anim-fade-up d-5"
             style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 'var(--radius-xl)',
-              padding: '1.75rem',
-              backdropFilter: 'blur(10px)',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              marginBottom: '2.5rem',
+              flexWrap: 'wrap',
             }}
           >
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-gold)', marginBottom: '1.25rem' }}>
-              10-Second Mental Model: How Value & Transactions Flow
+            {AUDIENCES.map((aud) => {
+              const isSelected = aud.id === selectedAudience;
+              return (
+                <button
+                  key={aud.id}
+                  onClick={() => setSelectedAudience(aud.id as any)}
+                  style={{
+                    padding: '0.65rem 1.5rem',
+                    borderRadius: '8px',
+                    border: isSelected ? '1px solid #C8953A' : '1px solid rgba(255,255,255,0.08)',
+                    background: isSelected ? 'rgba(200,149,58,0.15)' : 'rgba(255,255,255,0.02)',
+                    color: isSelected ? '#F8F6F2' : '#8A8F9E',
+                    fontWeight: isSelected ? 700 : 500,
+                    fontSize: '0.92rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {aud.title}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab Panel */}
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px',
+              padding: '2.5rem',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '2.5rem',
+              alignItems: 'center',
+            }}
+          >
+            <div>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.1em', color: '#C8953A', textTransform: 'uppercase' }}>
+                {activeAudience.subtitle}
+              </span>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0.5rem 0 1rem 0' }}>
+                {activeAudience.title}
+              </h3>
+              <p style={{ color: '#8A8F9E', fontSize: '1rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                {activeAudience.summary}
+              </p>
+              <Link
+                href={activeAudience.href}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  color: '#C8953A',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  textDecoration: 'none',
+                }}
+              >
+                {activeAudience.cta} →
+              </Link>
             </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '1.25rem',
-              }}
-            >
-              {FLOW_STEPS.map((item, idx) => (
-                <div key={item.step} style={{ position: 'relative' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-gold)' }}>
-                      {item.step}
-                    </span>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-paper)' }}>
-                      {item.name}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: 'rgba(248,246,242,0.5)', lineHeight: 1.5, margin: 0 }}>
-                    {item.body}
-                  </p>
-                </div>
-              ))}
+
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: '1.5rem' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#8A8F9E', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Key Advantages
+              </h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {activeAudience.points.map((pt, idx) => (
+                  <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.92rem', color: '#EDE8DF' }}>
+                    <span style={{ color: '#C8953A', fontWeight: 800 }}>✓</span>
+                    <span>{pt}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
+
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════ REAL ON-CHAIN SPOTLIGHT */}
-      <section style={{ background: 'var(--color-paper-white)', padding: '5rem 0', borderBottom: '1px solid var(--color-ink-100)' }}>
-        <div className="container">
-          <div className="card" style={{ padding: '2.5rem', background: 'var(--color-ink)', color: 'var(--color-paper)', borderColor: 'rgba(255,255,255,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span className="dot-live" />
-                  <span className="badge badge-green">Verified Real On-Chain Execution</span>
-                </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-paper)', letterSpacing: '-0.025em' }}>
-                  TechnoCore User Agent Execution Live on Arc Testnet
-                </h2>
-                <p style={{ color: 'rgba(248,246,242,0.5)', fontSize: '0.875rem', marginTop: 4 }}>
-                  Agent signed with Ed25519 <code style={{ color: 'var(--color-gold)' }}>did:key</code>, sponsored by Paymaster, confirmed in Block #{VERIFIED_TX.block}.
+      {/* ── 5-STEP EXECUTION LOOP ──────────────────────────────── */}
+      <section style={{ padding: '5rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+
+          <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.12em', color: '#C8953A', textTransform: 'uppercase' }}>
+              The Autonomous Loop
+            </span>
+            <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.25rem)', fontWeight: 800, marginTop: '0.5rem', letterSpacing: '-0.02em' }}>
+              Discover → Evaluate → Sponsor → Execute → Settle
+            </h2>
+            <p style={{ color: '#8A8F9E', maxWidth: 640, margin: '0.5rem auto 0 auto', fontSize: '0.95rem' }}>
+              A complete on-chain lifecycle ensuring applications are funded, transactions are policy-verified, and revenue is automatically recovered.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1.25rem' }}>
+            {FLOW_STEPS.map((step) => (
+              <div
+                key={step.step}
+                style={{
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '10px',
+                  padding: '1.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem',
+                }}
+              >
+                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#C8953A' }}>
+                  {step.step}
+                </span>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#F8F6F2' }}>
+                  {step.name}
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#8A8F9E', lineHeight: 1.5, margin: 0 }}>
+                  {step.body}
                 </p>
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <a
-                  href={`https://testnet.arcscan.app/tx/${VERIFIED_TX.hash}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-gold btn-md"
-                >
-                  View on ArcScan ↗
-                </a>
-                <Link href="/agent-demo" className="btn btn-outline-white btn-md">
-                  Interactive Simulator →
-                </Link>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1px', background: 'rgba(255,255,255,0.08)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-              {[
-                { label: 'Transaction Hash', value: `${VERIFIED_TX.hash.slice(0, 10)}…${VERIFIED_TX.hash.slice(-8)}` },
-                { label: 'Block Confirmed', value: `#${VERIFIED_TX.block}` },
-                { label: 'Gas Used', value: VERIFIED_TX.gasUsed },
-                { label: 'Vault TVL Growth', value: `${VERIFIED_TX.tvlBefore} → ${VERIFIED_TX.tvlAfter}` },
-                { label: 'Profit Realized', value: '+2.50 USDC (50/50 Split)' },
-              ].map((m) => (
-                <div key={m.label} style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)' }}>
-                  <div className="stat-label" style={{ color: 'rgba(248,246,242,0.4)', marginBottom: 4 }}>{m.label}</div>
-                  <div style={{ color: 'var(--color-paper)', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: '0.875rem' }}>{m.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════ THREE AGENT ROLES */}
-      <section style={{ padding: '6rem 0', background: 'var(--color-paper)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 3.5rem' }}>
-            <span className="badge badge-gold" style={{ marginBottom: '0.75rem' }}>Economic Utility</span>
-            <h2 className="text-display" style={{ marginBottom: '0.75rem' }}>
-              Three Autonomous Roles
-            </h2>
-            <p className="text-body text-muted">
-              AI agents in Auren express intent and analyze telemetry — on-chain policy and isolated vaults hold authoritative control.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '1.75rem' }}>
-            {/* User Agent */}
-            <div className="card" style={{ padding: '2.25rem', borderColor: '#B8D9CB', background: '#F4FAF7' }}>
-              <span className="badge badge-green" style={{ marginBottom: '1.25rem' }}>Autonomous Consumer</span>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>User Agent</h3>
-              <p className="text-sm text-muted" style={{ marginBottom: '1.5rem', lineHeight: 1.6, minHeight: 68 }}>
-                Discovers registered Arc DApps, validates sponsorship eligibility against Auren policy, signs requests with its <code style={{ color: 'var(--color-ink)' }}>did:key</code>, and executes gas-free on Arc.
-              </p>
-              <div className="card-inset" style={{ padding: '1rem', fontSize: '0.75rem', background: 'white', marginBottom: '1rem' }}>
-                <span style={{ fontWeight: 600 }}>Capability: </span>
-                <span>Calls Auren Paymaster & syncs state to TechnoCore /r/auren-ops</span>
-              </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-emerald)' }}>
-                🔒 Zero Vault Custody · Bounded by Policy
-              </div>
-            </div>
-
-            {/* Growth Agent */}
-            <div className="card" style={{ padding: '2.25rem', borderColor: 'var(--color-gold-200)', background: '#FFFDF9' }}>
-              <span className="badge badge-gold" style={{ marginBottom: '1.25rem' }}>Acquisition Strategist</span>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Growth Agent</h3>
-              <p className="text-sm text-muted" style={{ marginBottom: '1.5rem', lineHeight: 1.6, minHeight: 68 }}>
-                Analyzes gas spent, revenue generated, and capital recovery velocity. Recommends sponsorship budget adjustments to DApp developers to maximize ROI.
-              </p>
-              <div className="card-inset" style={{ padding: '1rem', fontSize: '0.75rem', background: 'white', marginBottom: '1rem' }}>
-                <span style={{ fontWeight: 600 }}>Capability: </span>
-                <span>Publishes advisories to TechnoCore /r/auren-growth and /kv/auren-growth</span>
-              </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-gold)' }}>
-                🔒 Advisory Only · No Direct Fund Control
-              </div>
-            </div>
-
-            {/* Investment Agent */}
-            <div className="card" style={{ padding: '2.25rem', borderColor: '#D0D6E2', background: '#F8FAFC' }}>
-              <span className="badge badge-neutral" style={{ marginBottom: '1.25rem' }}>LP Venture Analyst</span>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Investment Agent</h3>
-              <p className="text-sm text-muted" style={{ marginBottom: '1.5rem', lineHeight: 1.6, minHeight: 68 }}>
-                Evaluates active vaults for LPs: calculates capital at risk (unrecovered principal), recovery rate, and net profit distribution under non-interest terms.
-              </p>
-              <div className="card-inset" style={{ padding: '1rem', fontSize: '0.75rem', background: 'white', marginBottom: '1rem' }}>
-                <span style={{ fontWeight: 600 }}>Capability: </span>
-                <span>Generates LP venture risk briefs to TechnoCore /r/auren-lp</span>
-              </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#3B82F6' }}>
-                🔒 Analyst Only · No Fund Movement Authority
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════ BUILT FOR ARC ECOSYSTEM */}
-      <section style={{ padding: '6rem 0', background: 'var(--color-paper-white)', borderTop: '1px solid var(--color-ink-100)', borderBottom: '1px solid var(--color-ink-100)' }}>
-        <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', alignItems: 'center' }}>
-            <div>
-              <span className="badge badge-arc" style={{ marginBottom: '1rem' }}>Ecosystem Architecture</span>
-              <h2 className="text-display" style={{ marginBottom: '1rem' }}>
-                Built for the Arc Ecosystem
-              </h2>
-              <p className="text-body text-muted" style={{ marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                Arc is a stablecoin-native Layer-1 blockchain built by Circle where USDC is the native gas token.
-                Auren leverages native USDC with ERC-4337 Account Abstraction and TechnoCore MCP tools to enable frictionless agent commerce.
-              </p>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <Link href="/technocore" className="btn btn-primary">
-                  TechnoCore Architecture →
-                </Link>
-                <Link href="/build" className="btn btn-outline">
-                  Developer Quickstart
-                </Link>
-              </div>
-            </div>
-
-            <div className="card" style={{ padding: '2rem' }}>
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                {[
-                  ['Network', 'Arc Testnet (Chain ID 5042002)'],
-                  ['Native Gas Token', 'USDC (18 decimals via msg.value)'],
-                  ['Account Abstraction', 'ERC-4337 Canonical EntryPoint v0.6'],
-                  ['Agent Identity', 'Ed25519 did:key:z6Mk...'],
-                  ['Agent Discovery', '/llms.txt, /skill.md, agent.json'],
-                  ['Tool Standard', 'Model Context Protocol (MCP) stdio & JSON-RPC'],
-                ].map(([k, v]) => (
-                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.625rem 0', borderBottom: '1px solid var(--color-ink-100)', fontSize: '0.8125rem' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{k}</span>
-                    <span className="text-mono" style={{ color: 'var(--color-ink-500)' }}>{v}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════ TECHNICAL TRANSPARENCY / TRUST */}
-      <section style={{ padding: '6rem 0', background: 'var(--color-paper)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 3rem' }}>
-            <span className="badge badge-neutral" style={{ marginBottom: '0.75rem' }}>Trust & Transparency</span>
-            <h2 className="text-display" style={{ marginBottom: '0.75rem' }}>
-              Verified Deployed Contracts
-            </h2>
-            <p className="text-body text-muted">
-              Deterministic on-chain authority guarantees that funds are protected by smart contracts, not AI promises.
-            </p>
-          </div>
-
-          <div className="card" style={{ padding: '2.5rem' }}>
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {[
-                ['MudarabahVaultFactory', '0x8CB1E0Dcd5dA6F8C17b83535B4307128701BA7ab'],
-                ['Active DAppVault', '0x851bD1E5d9CdeD0f183e861dB98157641C826a74'],
-                ['InvestmentPaymaster', '0x2a4122372B1A624118Ee3e7D4503B9525CfDE076'],
-                ['RevenueSplitter', '0x8aA1197eFF337Db0c2aaF9e085c50cB46A7Fb2f7'],
-                ['DemoDApp Marketplace', '0xFE6389811C6690CC7B367EaEfdF344Ed1eFbd5f6'],
-                ['Canonical EntryPoint v0.6', '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789'],
-              ].map(([name, addr]) => (
-                <div key={name} className="metric-row" style={{ padding: '0.75rem 0' }}>
-                  <span className="metric-label" style={{ minWidth: 200, fontWeight: 600 }}>{name}</span>
-                  <a
-                    href={`https://testnet.arcscan.app/address/${addr}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="metric-value text-mono"
-                    style={{ color: 'var(--color-ink)', textDecoration: 'underline' }}
-                  >
-                    {addr}
-                  </a>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════ FINAL CTAS */}
-      <section style={{ padding: '6rem 0', background: 'var(--color-ink)', color: 'var(--color-paper)' }}>
-        <div className="container" style={{ textAlign: 'center', maxWidth: 680 }}>
-          <h2 style={{ fontSize: '2.25rem', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--color-paper)', marginBottom: '1rem' }}>
-            Build with Auren
-          </h2>
-          <p style={{ color: 'rgba(248,246,242,0.6)', fontSize: '1.0625rem', lineHeight: 1.6, marginBottom: '2.5rem' }}>
-            Empower your DApp or autonomous agent with frictionless gas sponsorship and profit-sharing capital.
-          </p>
-
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '3rem' }}>
-            <Link href="/agent-demo" className="btn btn-gold btn-lg">
-              ▶ Watch an Agent Execute
-            </Link>
-            <Link href="/build" className="btn btn-outline-white btn-lg">
-              Launch an Agent / DApp
-            </Link>
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: 'rgba(248,246,242,0.3)', margin: 0 }}>
-            No guaranteed returns · No fixed APY · Capital is at risk · Designed around a non-interest, profit-sharing model; subject to qualified Sharia scholar review.
-          </p>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════ FOOTER */}
-      <footer style={{ background: 'var(--color-ink)', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '2.5rem 0' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-            <LogoMark size={22} />
-            <span style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.02em', color: 'var(--color-paper)' }}>
-              Auren
-            </span>
-            <span style={{ fontSize: '0.75rem', color: 'rgba(248,246,242,0.2)', marginLeft: '0.5rem' }}>
-              Arc Testnet · TechnoCore Integration
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-            {[
-              ['Agent Demo', '/agent-demo'],
-              ['TechnoCore', '/technocore'],
-              ['Developers', '/build'],
-              ['Invest', '/invest'],
-              ['Explore', '/explore'],
-              ['App Demo', '/demo'],
-            ].map(([label, href]) => (
-              <Link key={label} href={href} style={{ color: 'rgba(248,246,242,0.4)', fontSize: '0.8125rem', textDecoration: 'none' }}>
-                {label}
-              </Link>
             ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── LIVE PROOF TEASER ──────────────────────────────────── */}
+      <section style={{ padding: '4.5rem 1.5rem', background: '#0D111A' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ padding: '2.5rem', borderRadius: '12px', background: 'rgba(200,149,58,0.04)', border: '1px solid rgba(200,149,58,0.2)' }}>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.75rem' }}>
+              Experience Live ERC-4337 Sponsorship
+            </h2>
+            <p style={{ color: '#8A8F9E', fontSize: '0.95rem', maxWidth: 580, margin: '0 auto 1.5rem auto' }}>
+              Trigger a real autonomous smart account execution on Arc Testnet. Watch the Auren Paymaster cover gas fees directly from the isolated DAppVault.
+            </p>
+            <Link
+              href="/agent-demo"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '6px',
+                background: '#C8953A',
+                color: '#0A0D14',
+                fontWeight: 700,
+                fontSize: '0.92rem',
+                textDecoration: 'none',
+              }}
+            >
+              Open Live Execution Console →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ──────────────────────────────────────────────── */}
+      <footer style={{ padding: '3rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', color: '#8A8F9E', fontSize: '0.85rem' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <LogoMark size={20} />
+            <span style={{ fontWeight: 700, color: '#F8F6F2', letterSpacing: '0.08em' }}>AUREN</span>
+            <span>— Arc Testnet Release Candidate</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1.5rem' }}>
+            <Link href="/users" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Users</Link>
+            <Link href="/build" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Developers</Link>
+            <Link href="/capital" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Capital</Link>
+            <Link href="/explore" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Explore</Link>
+            <Link href="/technocore" style={{ color: '#8A8F9E', textDecoration: 'none' }}>TechnoCore</Link>
+            <Link href="/brand" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Brand</Link>
           </div>
         </div>
       </footer>
-    </>
+
+    </div>
   );
 }

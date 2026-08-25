@@ -6,7 +6,7 @@ import "./RevenueSplitter.sol";
 contract MudarabahVaultFactory {
     IEntryPoint public immutable entryPoint;
     address public immutable backendSigner;
-    
+
     event VaultDeployed(address indexed developer, address vault, address paymaster, address splitter);
 
     constructor(IEntryPoint _entryPoint, address _backendSigner) {

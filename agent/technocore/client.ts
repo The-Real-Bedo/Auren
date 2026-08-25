@@ -14,12 +14,12 @@ export interface TechnoCoreRoomResponse {
 
 /**
  * TechnoCore Client
- * 
+ *
  * Interacts with technocore-chat over plain HTTP GETs:
  * - Room messaging: /r/<room>/say/<nick>/<text>
  * - Room reading: /r/<room>?since=<seq>
  * - Key-Value Notes: /kv/<ns>/<key>/set/<value> and /kv/<ns>/<key>
- * 
+ *
  * Supports remote TechnoCore host (e.g. https://technocore.chat or http://localhost:8080)
  * with an integrated in-memory fallback for local execution and offline tests.
  */

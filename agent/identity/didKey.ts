@@ -38,7 +38,7 @@ export interface SignedEnvelope<T = any> {
 
 /**
  * TechnoCore-compatible Agent Identity
- * 
+ *
  * Supports:
  * 1. Ed25519 did:key (did:key:z6Mk...) compliant with technocore-chat (src/didkey.py)
  * 2. EVM Keypair for on-chain identity & Arc transaction dispatch
