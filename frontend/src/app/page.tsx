@@ -174,7 +174,7 @@ export default function Home() {
           {/* Primary Action Buttons */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <Link
-              href="/agent-demo"
+              href="/demo"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -190,8 +190,29 @@ export default function Home() {
                 transition: 'transform 0.2s, opacity 0.2s',
               }}
             >
-              Watch an Agent Execute
+              Try Auren (Consumer Demo)
               <span>→</span>
+            </Link>
+
+            <Link
+              href="/agent-demo"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.85rem 1.75rem',
+                borderRadius: '8px',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(200,149,58,0.4)',
+                color: '#F8F6F2',
+                fontWeight: 600,
+                fontSize: '0.98rem',
+                textDecoration: 'none',
+                transition: 'background 0.2s',
+              }}
+            >
+              Watch an Agent Execute
+              <span style={{ color: '#C8953A' }}>🤖</span>
             </Link>
 
             <Link
@@ -201,7 +222,7 @@ export default function Home() {
                 alignItems: 'center',
                 padding: '0.85rem 1.75rem',
                 borderRadius: '8px',
-                background: 'rgba(255,255,255,0.06)',
+                background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.12)',
                 color: '#F8F6F2',
                 fontWeight: 600,

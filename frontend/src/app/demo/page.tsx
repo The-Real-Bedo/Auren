@@ -1,322 +1,548 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BrowserProvider, Contract, ethers } from 'ethers';
+import Link from 'next/link';
+import { BrowserProvider, ethers } from 'ethers';
 import { CONTRACTS, ARC_TESTNET_CHAIN_ID } from '../../config/contracts';
-import { VAULT_ABI } from '../../config/abis';
-import { getApiUrl } from '../../config/api';
+import {
+  executeSponsoredAction,
+  getSmartAccountAddress,
+  checkAccountDeployed,
+  SharedERC4337Result
+} from '../../lib/erc4337';
 
-const DAPP_ABI = ['function purchaseItem() external payable'];
-type TxState = 'idle' | 'sponsoring' | 'confirming' | 'success' | 'error';
+type PurchaseState =
+  | 'idle'
+  | 'connecting'
+  | 'checking-network'
+  | 'preparing'
+  | 'sponsoring'
+  | 'signing'
+  | 'submitting'
+  | 'confirming'
+  | 'success'
+  | 'error';
 
-export default function DemoPage() {
+export default function ConsumerDemoPage() {
   const [account, setAccount] = useState<string | null>(null);
+  const [smartAccount, setSmartAccount] = useState<string | null>(null);
+  const [isSmartAccountDeployed, setIsSmartAccountDeployed] = useState<boolean>(false);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
-  const [txState, setTxState] = useState<TxState>('idle');
-  const [txHash, setTxHash] = useState('');
-  const [errMsg, setErrMsg] = useState('');
-  const [metrics, setMetrics] = useState<any>(null);
-  const [paymasterSig, setPaymasterSig] = useState('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [state, setState] = useState<PurchaseState>('idle');
+  const [stepDetail, setStepDetail] = useState<string>('');
+  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [result, setResult] = useState<SharedERC4337Result | null>(null);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
+  const [showEconomicDetails, setShowEconomicDetails] = useState<boolean>(false);
+  const [userBalance, setUserBalance] = useState<string>('0.00');
 
   const config = CONTRACTS[ARC_TESTNET_CHAIN_ID];
   const isArc = chainId === ARC_TESTNET_CHAIN_ID;
+  const itemPriceUsdc = '10.00';
+  const itemPriceWei = ethers.parseEther('10.0');
 
-  const connect = async () => {
-    if (!(window as any).ethereum) { alert('Install MetaMask first.'); return; }
-    const prov = new BrowserProvider((window as any).ethereum);
-    await prov.send('eth_requestAccounts', []);
-    const signer = await prov.getSigner();
-    const net = await prov.getNetwork();
-    setAccount(await signer.getAddress());
-    setProvider(prov);
-    setChainId(Number(net.chainId));
-    (window as any).ethereum.on('chainChanged', () => window.location.reload());
-  };
+  // Listen for wallet account / network changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      const eth = (window as any).ethereum;
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length === 0) {
+          setAccount(null);
+          setSmartAccount(null);
+        } else {
+          setAccount(accounts[0]);
+        }
+      };
+      const handleChainChanged = (hexChainId: string) => {
+        setChainId(parseInt(hexChainId, 16));
+      };
 
-  const loadMetrics = async () => {
-    if (!provider || !isArc) return;
+      eth.on('accountsChanged', handleAccountsChanged);
+      eth.on('chainChanged', handleChainChanged);
+
+      return () => {
+        eth.removeListener('accountsChanged', handleAccountsChanged);
+        eth.removeListener('chainChanged', handleChainChanged);
+      };
+    }
+  }, []);
+
+  // Sync Smart Account and balance when account or chainId changes
+  useEffect(() => {
+    if (!account || !isArc) return;
+    const currentAccount = account;
+    let mounted = true;
+
+    async function loadAccountData() {
+      try {
+        const prov = new ethers.JsonRpcProvider(config.rpc);
+        const sa = await getSmartAccountAddress(currentAccount, 0, prov);
+        const deployed = await checkAccountDeployed(sa, prov);
+        const bal = await prov.getBalance(currentAccount);
+
+        if (mounted) {
+          setSmartAccount(sa);
+          setIsSmartAccountDeployed(deployed);
+          setUserBalance(parseFloat(ethers.formatEther(bal)).toFixed(4));
+        }
+      } catch (err) {
+        console.error('Failed to load account data:', err);
+      }
+    }
+
+    loadAccountData();
+    return () => { mounted = false; };
+  }, [account, isArc]);
+
+  const connectWallet = async () => {
+    if (typeof window === 'undefined' || !(window as any).ethereum) {
+      setErrorMsg('Please install a Web3 wallet (e.g. MetaMask) to continue.');
+      setState('error');
+      return;
+    }
+
+    setState('connecting');
+    setErrorMsg('');
+
     try {
-      const vault = new Contract(config.vault, VAULT_ABI, provider);
-      const [tvl, unrecovered, recovered] = await Promise.all([
-        vault.totalValue(), vault.unrecoveredCapital(), vault.totalCapitalRecovered(),
-      ]);
-      setMetrics({ tvl, unrecovered, recovered });
-    } catch {}
-  };
+      const browserProvider = new BrowserProvider((window as any).ethereum);
+      const accounts = await browserProvider.send('eth_requestAccounts', []);
+      const network = await browserProvider.getNetwork();
 
-  useEffect(() => { if (provider && isArc) loadMetrics(); }, [provider, chainId]);
+      setAccount(accounts[0]);
+      setProvider(browserProvider);
+      setChainId(Number(network.chainId));
 
-  const handleBuy = async () => {
-    if (!provider || !isArc || !account) return;
-    setTxState('sponsoring');
-    setErrMsg(''); setTxHash(''); setPaymasterSig('');
-
-    try {
-      const signer = await provider.getSigner();
-      const dapp = new Contract(config.demoDApp, DAPP_ABI, signer);
-      const callData = dapp.interface.encodeFunctionData('purchaseItem');
-
-      const res = await fetch(getApiUrl('/sponsor'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userOp: { sender: account, nonce: Math.floor(Math.random() * 1e6), callData, maxCost: ethers.parseEther('0.005').toString() },
-          paymasterAddress: config.paymaster,
-          vaultAddress: config.vault,
-          chainId,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Sponsorship failed');
-      setPaymasterSig(data.paymasterAndData);
-
-      setTxState('confirming');
-      const tx = await dapp.purchaseItem({ value: ethers.parseEther('10') });
-      setTxHash(tx.hash);
-      await tx.wait();
-      setTxState('success');
-      loadMetrics();
-    } catch (e: any) {
-      setErrMsg(e.reason || e.message || 'Unknown error');
-      setTxState('error');
+      if (Number(network.chainId) !== ARC_TESTNET_CHAIN_ID) {
+        setState('checking-network');
+        await switchToArcTestnet(browserProvider);
+      } else {
+        setState('idle');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to connect wallet.');
+      setState('error');
     }
   };
 
-  const reset = () => { setTxState('idle'); setTxHash(''); setErrMsg(''); setPaymasterSig(''); };
+  const switchToArcTestnet = async (prov?: BrowserProvider) => {
+    const p = prov || provider;
+    if (!p) return;
+    try {
+      await (window as any).ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: `0x${ARC_TESTNET_CHAIN_ID.toString(16)}` }],
+      });
+      setChainId(ARC_TESTNET_CHAIN_ID);
+      setState('idle');
+    } catch (switchError: any) {
+      // Chain not added (error 4902)
+      if (switchError.code === 4902) {
+        try {
+          await (window as any).ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: `0x${ARC_TESTNET_CHAIN_ID.toString(16)}`,
+                chainName: 'Arc Testnet',
+                nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+                rpcUrls: [config.rpc],
+                blockExplorerUrls: [config.explorer],
+              },
+            ],
+          });
+          setChainId(ARC_TESTNET_CHAIN_ID);
+          setState('idle');
+        } catch (addError: any) {
+          setErrorMsg('Failed to add Arc Testnet to your wallet.');
+          setState('error');
+        }
+      } else {
+        setErrorMsg('Please switch your wallet to Arc Testnet to continue.');
+        setState('error');
+      }
+    }
+  };
+
+  const handlePurchase = async () => {
+    if (!account) {
+      await connectWallet();
+      return;
+    }
+
+    if (!isArc) {
+      await switchToArcTestnet();
+      return;
+    }
+
+    if (!provider) return;
+
+    setErrorMsg('');
+    setResult(null);
+
+    try {
+      const execResult = await executeSponsoredAction({
+        provider,
+        ownerAddress: account,
+        targetContractAddress: config.demoDApp,
+        purchaseValueWei: itemPriceWei,
+        onStepChange: (stepName, detail) => {
+          setState(stepName as PurchaseState);
+          setStepDetail(detail);
+        }
+      });
+
+      setResult(execResult);
+      setState('success');
+    } catch (err: any) {
+      console.error('Purchase flow error:', err);
+      let userFriendlyError = err.message || 'Transaction could not be completed.';
+      if (userFriendlyError.includes('user rejected') || userFriendlyError.includes('ACTION_REJECTED')) {
+        userFriendlyError = 'Signature request was cancelled in your wallet.';
+      } else if (userFriendlyError.includes('insufficient funds') || userFriendlyError.includes('exceeds balance')) {
+        userFriendlyError = 'Your connected wallet needs at least 10 USDC on Arc Testnet to purchase this item. (Note: Auren will cover the transaction gas).';
+      }
+      setErrorMsg(userFriendlyError);
+      setState('error');
+    }
+  };
+
+  const isProcessing = ['connecting', 'checking-network', 'preparing', 'sponsoring', 'signing', 'submitting', 'confirming'].includes(state);
 
   return (
-    <div style={{ paddingTop: 64, background: 'var(--color-paper)', minHeight: '100vh' }}>
-      {/* Header */}
-      <div className="page-header">
-        <div className="container-xs" style={{ position: 'relative', zIndex: 1 }}>
-          <span className="badge badge-arc" style={{ marginBottom: '1.25rem', display: 'inline-flex' }}>
-            <span className="dot-live" style={{ background: 'var(--color-arc)', animation: 'none' }} />
-            Live Demo · Arc Testnet
-          </span>
-          <h1 className="text-headline" style={{ color: 'var(--color-paper)', marginBottom: '0.75rem' }}>
-            Digital Marketplace
+    <div style={{ paddingTop: 72, background: 'var(--color-paper)', minHeight: '100vh', paddingBottom: 80 }}>
+      {/* ── HEADER & POSITIONING ─────────────────────────────────── */}
+      <div style={{ borderBottom: '1px solid var(--color-border)', background: 'white', padding: '3.5rem 1.5rem 3rem' }}>
+        <div style={{ maxWidth: 840, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '0.35rem 0.85rem', borderRadius: 99, marginBottom: '1.25rem' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16A34A' }} />
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#166534' }}>
+              Arc Testnet · Consumer Demo
+            </span>
+          </div>
+
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--color-ink)', marginBottom: '0.75rem', lineHeight: 1.15 }}>
+            Use applications without worrying about transaction gas.
           </h1>
-          <p style={{ color: 'rgba(248,246,242,0.45)', fontSize: '1rem' }}>
-            Purchase a digital item. Your transaction cost is covered by Auren.
+          <p style={{ fontSize: '1.125rem', color: 'var(--color-ink-muted)', maxWidth: 640, margin: '0 auto 1.5rem', lineHeight: 1.6 }}>
+            Auren automatically sponsors eligible blockchain transactions. You keep full non-custodial ownership of your wallet and only pay the actual item price.
           </p>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--color-ink-faint)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: 'var(--color-gold)', fontWeight: 700 }}>✓</span> 100% Non-Custodial
+            </div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--color-ink-faint)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: 'var(--color-gold)', fontWeight: 700 }}>✓</span> $0.00 Gas to User
+            </div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--color-ink-faint)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: 'var(--color-gold)', fontWeight: 700 }}>✓</span> Instant On-Chain Settlement
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="container-xs" style={{ paddingTop: '3rem', paddingBottom: '6rem' }}>
-        {/* Wallet state */}
-        {!account && (
-          <div className="card" style={{ padding: '3rem', textAlign: 'center', marginBottom: '2rem' }}>
-            <h3 style={{ marginBottom: '0.625rem' }}>Connect to continue</h3>
-            <p className="text-sm text-muted" style={{ marginBottom: '2rem' }}>
-              Connect your wallet to Arc Testnet to experience gas-sponsored transactions.
+      {/* ── MAIN CONTENT ─────────────────────────────────────────── */}
+      <div style={{ maxWidth: 760, margin: '2.5rem auto 0', padding: '0 1.25rem' }}>
+
+        {/* Testnet Disclaimer */}
+        <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{ fontSize: '1rem' }}>ℹ️</span>
+          <span style={{ fontSize: '0.8125rem', color: '#92400E' }}>
+            <strong>Public Testnet Mode:</strong> This demo runs on Arc Testnet using test USDC. Do not send real funds.
+          </span>
+        </div>
+
+        {/* Product Purchase Card */}
+        <div style={{ background: 'white', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+          <div style={{ padding: '1.75rem 2rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-gold)' }}>
+                Demo DApp Marketplace
+              </span>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-ink)', marginTop: '0.25rem' }}>
+                Premium Access Pass
+              </h2>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-ink)' }}>
+                ${itemPriceUsdc} <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--color-ink-muted)' }}>USDC</span>
+              </div>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#16A34A' }}>
+                Transaction Gas: FREE
+              </div>
+            </div>
+          </div>
+
+          <div style={{ padding: '2rem' }}>
+            <p style={{ color: 'var(--color-ink-muted)', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+              Purchase a lifetime access pass on Arc Testnet. The purchase payment routes directly to the application's Revenue Splitter and Vault, while Auren's Investment Paymaster covers 100% of the blockchain transaction gas.
             </p>
-            <button onClick={connect} className="btn btn-primary btn-lg" style={{ width: '100%' }}>
-              Connect Wallet
-            </button>
-          </div>
-        )}
 
-        {account && !isArc && (
-          <div className="status status-warning" style={{ marginBottom: '2rem' }}>
-            <span>⚠</span>
-            <span>Switch to <strong>Arc Testnet</strong> — Chain ID {ARC_TESTNET_CHAIN_ID}, RPC: {config.rpc}</span>
-          </div>
-        )}
-
-        {account && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
-            <span className="badge badge-green">
-              <span className="dot-live" />
-              {account.slice(0, 6)}…{account.slice(-4)}
-            </span>
-            {isArc && <span className="badge badge-arc">Arc Testnet</span>}
-          </div>
-        )}
-
-        {/* Product card */}
-        <div className="card" style={{ padding: '2.5rem', marginBottom: '1.5rem', overflow: 'hidden' }}>
-          {/* Product header */}
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap' }}>
-            {/* Thumbnail */}
-            <div style={{
-              width: 72, height: 72, flexShrink: 0,
-              borderRadius: 'var(--radius-lg)',
-              background: 'var(--color-gold-50)',
-              border: '1px solid var(--color-gold-100)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <path d="M6 6h16v16H6z" rx="2" stroke="var(--color-gold)" strokeWidth="1.5" fill="none" />
-                <path d="M10 14h8M14 10v8" stroke="var(--color-gold)" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+            {/* Price Breakdown */}
+            <div style={{ background: 'var(--color-paper)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '1.25rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9375rem' }}>
+                <span style={{ color: 'var(--color-ink)' }}>Item Price</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>10.00 USDC</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9375rem' }}>
+                <span style={{ color: 'var(--color-ink)' }}>Estimated Network Gas</span>
+                <span style={{ textDecoration: 'line-through', color: 'var(--color-ink-faint)' }}>~0.003 USDC</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9375rem' }}>
+                <span style={{ color: 'var(--color-gold)', fontWeight: 600 }}>Auren Gas Sponsorship</span>
+                <span style={{ fontWeight: 600, color: '#16A34A' }}>- 100% Covered</span>
+              </div>
+              <div style={{ height: 1, background: 'var(--color-border)', margin: '0.75rem 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.0625rem', fontWeight: 700 }}>
+                <span style={{ color: 'var(--color-ink)' }}>You Pay (Connected Wallet)</span>
+                <span style={{ color: 'var(--color-ink)' }}>10.00 USDC</span>
+              </div>
             </div>
 
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {/* Connected Wallet Info */}
+            {account && (
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '0.875rem 1rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem' }}>
                 <div>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em', marginBottom: '0.375rem' }}>
-                    Premium Digital Asset
-                  </h2>
-                  <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
-                    <span className="badge badge-gold">Gas covered by Auren</span>
-                    <span className="badge badge-neutral">Digital goods</span>
-                  </div>
+                  <span style={{ color: 'var(--color-ink-faint)', display: 'block' }}>Connected EOA Wallet:</span>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--color-ink)' }}>
+                    {account.slice(0, 8)}...{account.slice(-6)}
+                  </span>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1 }}>10.00</div>
-                  <div className="text-xs text-muted" style={{ marginTop: 2 }}>USDC · Arc native</div>
+                  <span style={{ color: 'var(--color-ink-faint)', display: 'block' }}>Testnet Balance:</span>
+                  <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{userBalance} USDC</span>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Error Message Display */}
+            {state === 'error' && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8, padding: '1rem', marginBottom: '1.5rem', color: '#991B1B', fontSize: '0.875rem', lineHeight: 1.5 }}>
+                <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Purchase Incomplete</div>
+                {errorMsg}
+              </div>
+            )}
+
+            {/* In-Flight Status Indicator */}
+            {isProcessing && (
+              <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '1.25rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+                <div style={{ display: 'inline-block', width: 24, height: 24, border: '3px solid #93C5FD', borderTopColor: '#2563EB', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
+                <div style={{ fontWeight: 700, color: '#1E40AF', fontSize: '0.9375rem', marginBottom: '0.25rem' }}>
+                  Processing Sponsored Purchase
+                </div>
+                <div style={{ fontSize: '0.8125rem', color: '#3B82F6' }}>
+                  {stepDetail || 'Communicating with Auren Protocol & Arc Testnet...'}
+                </div>
+              </div>
+            )}
+
+            {/* Action Button */}
+            {!account ? (
+              <button
+                onClick={connectWallet}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '1rem', fontSize: '1rem', fontWeight: 700 }}
+              >
+                Connect Wallet to Purchase
+              </button>
+            ) : !isArc ? (
+              <button
+                onClick={() => switchToArcTestnet()}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '1rem', fontSize: '1rem', fontWeight: 700, background: '#D97706' }}
+              >
+                Switch Wallet to Arc Testnet
+              </button>
+            ) : state === 'success' ? (
+              <button
+                onClick={() => { setState('idle'); setResult(null); }}
+                className="btn btn-secondary"
+                style={{ width: '100%', padding: '1rem', fontSize: '1rem', fontWeight: 700 }}
+              >
+                Purchase Another Item
+              </button>
+            ) : (
+              <button
+                onClick={handlePurchase}
+                disabled={isProcessing}
+                className="btn btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  opacity: isProcessing ? 0.7 : 1,
+                  cursor: isProcessing ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isProcessing ? 'Processing Transaction...' : 'Buy Now — Gas Covered by Auren'}
+              </button>
+            )}
           </div>
+        </div>
 
-          <div className="divider" style={{ marginBottom: '2rem' }} />
-
-          {/* Buy flow states */}
-          {txState === 'idle' && (
-            <button
-              onClick={handleBuy}
-              disabled={!isArc || !account}
-              className="btn btn-gold btn-xl"
-              style={{ width: '100%' }}
-            >
-              Buy Now
-            </button>
-          )}
-
-          {txState === 'sponsoring' && (
-            <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
-                <span className="spinner spinner-gold spinner-lg" />
+        {/* ── SUCCESS SCREEN ────────────────────────────────────────── */}
+        {state === 'success' && result && (
+          <div style={{ marginTop: '2rem', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 12, padding: '2rem', boxShadow: '0 4px 12px rgba(22, 163, 74, 0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: '#16A34A', color: 'white', fontWeight: 800, fontSize: '1.125rem' }}>
+                ✓
+              </span>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#166534', margin: 0 }}>
+                  Purchase Confirmed!
+                </h3>
+                <span style={{ fontSize: '0.8125rem', color: '#15803D' }}>
+                  Your transaction was executed on Arc Testnet with 100% sponsored gas.
+                </span>
               </div>
-              <div style={{ fontWeight: 600, marginBottom: '0.375rem' }}>Authorizing sponsorship</div>
-              <p className="text-sm text-muted">Auren is securing your transaction cost.</p>
             </div>
-          )}
 
-          {txState === 'confirming' && (
-            <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
-                <span className="spinner spinner-lg" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ background: 'white', padding: '1rem', borderRadius: 8, border: '1px solid #DCFCE7' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-ink-faint)', display: 'block' }}>Item Price Paid:</span>
+                <span style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-ink)' }}>10.00 USDC</span>
               </div>
-              <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Confirming on Arc Testnet</div>
-              {txHash && (
+              <div style={{ background: 'white', padding: '1rem', borderRadius: 8, border: '1px solid #DCFCE7' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-ink-faint)', display: 'block' }}>Gas Paid by You:</span>
+                <span style={{ fontSize: '1.125rem', fontWeight: 700, color: '#16A34A' }}>0.00 USDC (Sponsored)</span>
+              </div>
+              <div style={{ background: 'white', padding: '1rem', borderRadius: 8, border: '1px solid #DCFCE7' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-ink-faint)', display: 'block' }}>Total Purchases:</span>
+                <span style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-ink)' }}>
+                  {result.purchasesBefore} → {result.purchasesAfter}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ background: 'white', padding: '1rem 1.25rem', borderRadius: 8, border: '1px solid #DCFCE7', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ color: 'var(--color-ink-muted)' }}>Transaction Hash:</span>
                 <a
-                  href={`${config.explorer}/tx/${txHash}`}
+                  href={`https://testnet.arcscan.app/tx/${result.txHash}`}
                   target="_blank"
-                  rel="noreferrer"
-                  style={{ fontSize: '0.8125rem', fontFamily: 'var(--font-mono)', color: 'var(--color-gold)' }}
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--color-gold)', fontFamily: 'monospace', fontWeight: 600, textDecoration: 'underline' }}
                 >
-                  {txHash.slice(0, 14)}…{txHash.slice(-8)} ↗
+                  {result.txHash.slice(0, 10)}...{result.txHash.slice(-8)} ↗
                 </a>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ color: 'var(--color-ink-muted)' }}>Block Confirmed:</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>#{result.blockNumber}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--color-ink-muted)' }}>Smart Account:</span>
+                <span style={{ fontFamily: 'monospace', color: 'var(--color-ink)' }}>
+                  {result.smartAccount.slice(0, 8)}...{result.smartAccount.slice(-6)}
+                </span>
+              </div>
+            </div>
+
+            {/* Economic Settlement Collapsible */}
+            <div style={{ borderTop: '1px solid #DCFCE7', paddingTop: '1rem' }}>
+              <button
+                onClick={() => setShowEconomicDetails(!showEconomicDetails)}
+                style={{ background: 'none', border: 'none', color: '#166534', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: 0 }}
+              >
+                <span>{showEconomicDetails ? '▼' : '▶'}</span>
+                View Economic Settlement & Vault Accounting
+              </button>
+
+              {showEconomicDetails && (
+                <div style={{ marginTop: '1rem', background: 'white', borderRadius: 8, padding: '1rem', border: '1px solid #DCFCE7', fontSize: '0.8125rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: 'var(--color-ink-muted)' }}>Vault TVL:</span>
+                    <span>{result.tvlBefore} USDC → <strong>{result.tvlAfter} USDC</strong></span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: 'var(--color-ink-muted)' }}>Paymaster Gas Cost:</span>
+                    <span>{result.paymasterGasPaid} USDC</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: 'var(--color-ink-muted)' }}>Revenue Splitter:</span>
+                    <span>50% LP Pool / 50% Developer</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--color-ink-muted)' }}>Unrecovered Capital:</span>
+                    <span>{result.unrecoveredCapital} USDC</span>
+                  </div>
+                </div>
               )}
             </div>
-          )}
+          </div>
+        )}
 
-          {txState === 'success' && (
-            <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: '50%',
-                background: 'var(--color-emerald-50)',
-                border: '1px solid #B8D9CB',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 1.25rem',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 12l5 5L19 7" stroke="var(--color-emerald)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <div style={{ fontWeight: 700, fontSize: '1.125rem', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
-                Purchase confirmed
-              </div>
-              <p className="text-sm text-muted" style={{ marginBottom: '1.5rem' }}>
-                Revenue has been routed through the Perpetua distribution system.
-              </p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                {txHash && (
-                  <a
-                    href={`${config.explorer}/tx/${txHash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-outline btn-sm"
-                  >
-                    View on Arc Explorer ↗
-                  </a>
-                )}
-                <button onClick={reset} className="btn btn-ghost btn-sm">Buy another</button>
-              </div>
-            </div>
-          )}
+        {/* ── TECHNICAL DETAILS COLLAPSIBLE ───────────────────────── */}
+        <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+          <button
+            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+            style={{ background: 'none', border: 'none', color: 'var(--color-ink-muted)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <span>{showTechnicalDetails ? '▼' : '▶'}</span>
+            Technical details (ERC-4337 & Paymaster Architecture)
+          </button>
 
-          {txState === 'error' && (
-            <div>
-              <div className="status status-error" style={{ marginBottom: '1rem' }}>
-                <span>✕</span>
-                <span>{errMsg}</span>
+          {showTechnicalDetails && (
+            <div style={{ marginTop: '1rem', background: 'white', border: '1px solid var(--color-border)', borderRadius: 8, padding: '1.25rem', fontSize: '0.8125rem', fontFamily: 'monospace' }}>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <span style={{ color: 'var(--color-ink-faint)' }}>EntryPoint v0.6: </span>
+                <span style={{ color: 'var(--color-ink)' }}>{config.entryPoint}</span>
               </div>
-              <button onClick={reset} className="btn btn-outline btn-sm">Try again</button>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <span style={{ color: 'var(--color-ink-faint)' }}>InvestmentPaymaster: </span>
+                <span style={{ color: 'var(--color-ink)' }}>{config.paymaster}</span>
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <span style={{ color: 'var(--color-ink-faint)' }}>DemoDApp Target: </span>
+                <span style={{ color: 'var(--color-ink)' }}>{config.demoDApp}</span>
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <span style={{ color: 'var(--color-ink-faint)' }}>DAppVault: </span>
+                <span style={{ color: 'var(--color-ink)' }}>{config.vault}</span>
+              </div>
+              <div>
+                <span style={{ color: 'var(--color-ink-faint)' }}>SimpleAccountFactory: </span>
+                <span style={{ color: 'var(--color-ink)' }}>{config.accountFactory}</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Advanced */}
-        <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="btn btn-ghost btn-sm"
-          style={{ color: 'var(--color-ink-400)', marginBottom: showAdvanced ? '0.75rem' : 0 }}
-        >
-          {showAdvanced ? '▲' : '▼'} Technical details
-        </button>
+        {/* ── FOOTER NAVIGATION TO AGENT & BUILD ───────────────────── */}
+        <div style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+          <Link
+            href="/agent-demo"
+            style={{ textDecoration: 'none', background: 'white', border: '1px solid var(--color-border)', borderRadius: 10, padding: '1.25rem', display: 'block', transition: 'transform 0.15s ease' }}
+          >
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-gold)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+              Autonomous Agents →
+            </div>
+            <div style={{ fontWeight: 700, color: 'var(--color-ink)', marginBottom: '0.25rem' }}>
+              Watch an Agent Execute
+            </div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-ink-muted)' }}>
+              See an AI agent discover, evaluate, and execute sponsored actions autonomously.
+            </div>
+          </Link>
 
-        {showAdvanced && (
-          <div className="card-inset" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ display: 'grid', gap: '0.625rem' }}>
-              {[
-                ['Protocol', 'ERC-4337 Account Abstraction'],
-                ['Paymaster', config.paymaster],
-                ['DemoDApp', config.demoDApp],
-                ['Vault', config.vault],
-                ['EntryPoint', config.entryPoint],
-                ['Chain ID', String(ARC_TESTNET_CHAIN_ID)],
-                ['RPC', config.rpc],
-                ['Paymaster authorization', paymasterSig ? paymasterSig.slice(0, 26) + '…' : '—'],
-                ['Transaction hash', txHash || '—'],
-              ].map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-ink-400)', minWidth: 180, flexShrink: 0 }}>{k}</span>
-                  <span style={{ fontSize: '0.8125rem', fontFamily: 'var(--font-mono)', color: 'var(--color-ink)', wordBreak: 'break-all' }}>{v}</span>
-                </div>
-              ))}
+          <Link
+            href="/build"
+            style={{ textDecoration: 'none', background: 'white', border: '1px solid var(--color-border)', borderRadius: 10, padding: '1.25rem', display: 'block', transition: 'transform 0.15s ease' }}
+          >
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-gold)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+              Developers →
             </div>
-          </div>
-        )}
-
-        {/* Vault accounting */}
-        {metrics && (
-          <div className="card" style={{ padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontWeight: 600, letterSpacing: '-0.02em' }}>Vault Accounting</h3>
-              <button onClick={loadMetrics} className="btn btn-ghost btn-sm">↻</button>
+            <div style={{ fontWeight: 700, color: 'var(--color-ink)', marginBottom: '0.25rem' }}>
+              Build with Auren SDK
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {[
-                { label: 'Total Vault Value', value: parseFloat(ethers.formatEther(metrics.tvl)).toFixed(4) + ' USDC', color: 'var(--color-ink)' },
-                { label: 'Capital at Risk', value: parseFloat(ethers.formatEther(metrics.unrecovered)).toFixed(4) + ' USDC', color: metrics.unrecovered > BigInt(0) ? 'var(--color-rose)' : 'var(--color-emerald)' },
-                { label: 'Capital Recovered', value: parseFloat(ethers.formatEther(metrics.recovered)).toFixed(4) + ' USDC', color: 'var(--color-emerald)' },
-              ].map(s => (
-                <div key={s.label} className="metric-row">
-                  <span className="metric-label">{s.label}</span>
-                  <span className="metric-value" style={{ color: s.color }}>{s.value}</span>
-                </div>
-              ))}
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-ink-muted)' }}>
+              Integrate zero-gas onboarding into your Arc application in under 5 minutes.
             </div>
-            <p className="text-2xs text-subtle" style={{ marginTop: '1rem' }}>
-              Live from {config.vault.slice(0, 12)}… · Arc Testnet Chain ID {ARC_TESTNET_CHAIN_ID}
-            </p>
-          </div>
-        )}
+          </Link>
+        </div>
       </div>
     </div>
   );

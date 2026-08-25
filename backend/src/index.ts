@@ -261,6 +261,7 @@ app.post('/agent/submit-userop', async (req: Request, res: Response): Promise<an
       success: true,
       userOpHash,
       transactionHash: receipt.hash,
+      txHash: receipt.hash,
       blockNumber: receipt.blockNumber,
       gasUsed: receipt.gasUsed.toString(),
       status: receipt.status

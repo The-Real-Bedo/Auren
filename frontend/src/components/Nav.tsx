@@ -22,12 +22,12 @@ export function LogoMark({ size = 26 }: { size?: number }) {
 }
 
 const NAV_LINKS = [
-  { href: '/users', label: 'Users' },
+  { href: '/demo', label: 'Try App', highlight: true },
+  { href: '/agent-demo', label: 'Agent Demo' },
   { href: '/build', label: 'Developers' },
   { href: '/capital', label: 'Capital' },
   { href: '/explore', label: 'Explore' },
   { href: '/technocore', label: 'TechnoCore' },
-  { href: '/agent-demo', label: 'Live Demo', highlight: true },
 ];
 
 export default function Nav() {
