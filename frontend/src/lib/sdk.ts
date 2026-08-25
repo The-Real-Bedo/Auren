@@ -1,8 +1,8 @@
 import { PerpetuaSDK } from '@/sdk/index';
 import { ethers, BrowserProvider } from 'ethers';
 
-export const FACTORY_ADDRESS = process.env.NEXT_PUBLIC_FACTORY_ADDRESS || ethers.ZeroAddress;
-export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "http://127.0.0.1:8545";
+export const FACTORY_ADDRESS = process.env.NEXT_PUBLIC_FACTORY_ADDRESS || "0x8CB1E0Dcd5dA6F8C17b83535B4307128701BA7ab";
+export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://rpc.testnet.arc.network";
 
 export async function getSDK(provider?: BrowserProvider) {
     if (provider) {

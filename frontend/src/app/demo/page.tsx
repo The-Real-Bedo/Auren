@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { BrowserProvider, Contract, ethers } from 'ethers';
 import { CONTRACTS, ARC_TESTNET_CHAIN_ID } from '../../config/contracts';
 import { VAULT_ABI } from '../../config/abis';
+import { getApiUrl } from '../../config/api';
 
 const DAPP_ABI = ['function purchaseItem() external payable'];
 type TxState = 'idle' | 'sponsoring' | 'confirming' | 'success' | 'error';
@@ -57,7 +58,7 @@ export default function DemoPage() {
       const dapp = new Contract(config.demoDApp, DAPP_ABI, signer);
       const callData = dapp.interface.encodeFunctionData('purchaseItem');
 
-      const res = await fetch('http://localhost:3001/sponsor', {
+      const res = await fetch(getApiUrl('/sponsor'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
