@@ -1,0 +1,51 @@
+# Auren Protocol — Autonomous Agent & Economic Layer Specification
+
+Auren provides economic and transaction infrastructure for autonomous AI agents and Arc DApps.
+Zero-custody policy verification, ERC-4337 paymaster sponsorship, and non-interest capital recovery.
+
+Base URL: https://rpc.testnet.arc.network
+Backend API: http://localhost:3001
+MCP Server: node agent/dist/mcp/server.js
+
+## 1. TechnoCore Integration & Tools
+
+TechnoCore agents discover and interact with Auren via:
+- MCP Server (`auren-mcp-server`)
+- HTTP REST API (`/agent/*`)
+- TechnoCore chat & notes (`/r/<room>`, `/kv/<ns>/<key>`)
+
+### Available Tools:
+
+1. `list_opportunities()`
+   - GET `/agent/opportunities`
+   - Returns all registered Arc DApp ventures, vault addresses, and profit-sharing terms.
+
+2. `get_dapp_economics(vaultAddress)`
+   - GET `/agent/economics/:vaultAddress`
+   - Returns gas deployed, capital recovered, unrecovered risk, and net profit.
+
+3. `get_vault_status(vaultAddress)`
+   - GET `/agent/vault/:vaultAddress`
+   - Returns real-time on-chain metrics from the isolated Mudarabah DAppVault.
+
+4. `check_sponsorship(request)`
+   - POST `/agent/check-sponsorship`
+   - Pre-flight eligibility dry-run without spending budget.
+
+5. `request_sponsorship(signedEnvelope)`
+   - POST `/agent/request-sponsorship`
+   - Validates did:key signed envelope against policy and returns `paymasterAndData`.
+
+6. `get_transaction_status(txHash)`
+   - GET `/agent/tx/:txHash`
+   - Returns on-chain confirmation status, block number, and gas used on Arc Testnet.
+
+## 2. Policy Constraints
+
+Every agent sponsorship request is subject to non-bypassable constraints:
+- Target chain must be Arc Testnet (5042002).
+- Target contract and function selector must be in the approved whitelist (e.g. `purchaseItem()`).
+- Arbitrary contract calls or vault withdrawals are strictly rejected.
+- Per-action gas limit (0.01 USDC max) and daily DApp budget caps enforced.
+
+Designed around a non-interest, profit-sharing model; subject to qualified Sharia scholar review.

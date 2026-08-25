@@ -1,0 +1,29 @@
+{
+  "name": "auren",
+  "version": "1.0.0",
+  "description": "Economic infrastructure for autonomous applications and Arc DApps",
+  "capabilities": {
+    "sponsorship": {
+      "supported_chains": [5042002, 31337],
+      "paymaster_standard": "ERC-4337 v0.6",
+      "gas_token": "Native USDC (18 decimals)"
+    },
+    "technocore_integration": {
+      "communication": "/r/auren-ops, /r/auren-growth, /r/auren-lp",
+      "notes": "/kv/auren-*",
+      "identity": "did:key signed writes"
+    }
+  },
+  "tools": [
+    "list_opportunities",
+    "get_dapp_economics",
+    "get_vault_status",
+    "check_sponsorship",
+    "request_sponsorship",
+    "get_transaction_status"
+  ],
+  "endpoints": {
+    "mcp": "node agent/dist/mcp/server.js",
+    "rest": "http://localhost:3001/agent"
+  }
+}

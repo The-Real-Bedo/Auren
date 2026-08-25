@@ -1,0 +1,100 @@
+# ==============================================================================
+# Auren Protocol — Production-Grade .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Environment Variables & Secrets (CRITICAL)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.save
+*.pem
+*.key
+*.keystore
+*.p12
+*.pfx
+
+# Preserve safe environment examples
+!.env.example
+!.env.*.example
+
+# ------------------------------------------------------------------------------
+# 2. Operating System & Editor Files
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+*.bak
+
+# IDE & Editor metadata
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------------------------
+# 3. Foundry / Solidity Build Artifacts
+# ------------------------------------------------------------------------------
+out/
+cache/
+broadcast/
+foundry.lock
+
+# ------------------------------------------------------------------------------
+# 4. Node.js & Package Managers
+# ------------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store
+.npm
+
+# ------------------------------------------------------------------------------
+# 5. TypeScript, Build Outputs & Maps
+# ------------------------------------------------------------------------------
+dist/
+build/
+*.tsbuildinfo
+*.map
+agent/dist/
+backend/dist/
+sdk/dist/
+
+# ------------------------------------------------------------------------------
+# 6. Next.js & Frontend Artifacts
+# ------------------------------------------------------------------------------
+.next/
+frontend/.next/
+frontend/out/
+
+# ------------------------------------------------------------------------------
+# 7. Testing & Coverage
+# ------------------------------------------------------------------------------
+coverage/
+*.lcov
+.nyc_output/
+
+# ------------------------------------------------------------------------------
+# 8. Local Media & Render Exports
+# ------------------------------------------------------------------------------
+*.mp4
+*.mov
+*.avi

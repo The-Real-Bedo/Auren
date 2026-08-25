@@ -1,0 +1,60 @@
+{
+  "name": "@auren/agent",
+  "version": "1.0.0",
+  "description": "Auren autonomous agent integration layer for TechnoCore and Arc DApps",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./tools": {
+      "types": "./dist/tools/aurenTools.d.ts",
+      "default": "./dist/tools/aurenTools.js"
+    },
+    "./api": {
+      "types": "./dist/api/routes.d.ts",
+      "default": "./dist/api/routes.js"
+    },
+    "./identity": {
+      "types": "./dist/identity/didKey.d.ts",
+      "default": "./dist/identity/didKey.js"
+    },
+    "./policies": {
+      "types": "./dist/policies/policyEngine.d.ts",
+      "default": "./dist/policies/policyEngine.js"
+    },
+    "./technocore": {
+      "types": "./dist/technocore/client.d.ts",
+      "default": "./dist/technocore/client.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/server.d.ts",
+      "default": "./dist/mcp/server.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && node dist/roles/testAll.js",
+    "poc:user": "tsc && node dist/roles/userAgent.js",
+    "poc:real-arc": "tsc && node dist/roles/runRealArcE2E.js",
+    "run:growth": "tsc && node dist/roles/growthAgent.js",
+    "run:investment": "tsc && node dist/roles/investmentAgent.js",
+    "mcp": "node dist/mcp/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "ethers": "^6.17.0",
+    "express": "^5.2.1",
+    "sdk": "file:../sdk"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2"
+  }
+}

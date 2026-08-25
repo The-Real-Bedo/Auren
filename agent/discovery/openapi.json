@@ -1,0 +1,72 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Auren Protocol Agent API",
+    "description": "Economic and transaction infrastructure for TechnoCore autonomous agents",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3001/agent" }
+  ],
+  "paths": {
+    "/opportunities": {
+      "get": {
+        "summary": "List registered Arc DApps",
+        "operationId": "list_opportunities",
+        "responses": { "200": { "description": "List of available opportunities" } }
+      }
+    },
+    "/vault/{vaultAddress}": {
+      "get": {
+        "summary": "Get live vault metrics",
+        "operationId": "get_vault_status",
+        "parameters": [
+          { "name": "vaultAddress", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Vault accounting data" } }
+      }
+    },
+    "/economics/{vaultAddress}": {
+      "get": {
+        "summary": "Get DApp economics and recovery telemetry",
+        "operationId": "get_dapp_economics",
+        "parameters": [
+          { "name": "vaultAddress", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Economics summary" } }
+      }
+    },
+    "/check-sponsorship": {
+      "post": {
+        "summary": "Pre-flight sponsorship eligibility dry run",
+        "operationId": "check_sponsorship",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object" } } }
+        },
+        "responses": { "200": { "description": "Eligibility result" } }
+      }
+    },
+    "/request-sponsorship": {
+      "post": {
+        "summary": "Request paymaster authorization using signed did:key envelope",
+        "operationId": "request_sponsorship",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object" } } }
+        },
+        "responses": { "200": { "description": "Paymaster signature" } }
+      }
+    },
+    "/tx/{txHash}": {
+      "get": {
+        "summary": "Get transaction status on Arc",
+        "operationId": "get_transaction_status",
+        "parameters": [
+          { "name": "txHash", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Transaction confirmation details" } }
+      }
+    }
+  }
+}

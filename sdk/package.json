@@ -1,0 +1,21 @@
+{
+  "name": "sdk",
+  "version": "1.0.0",
+  "description": "Auren Protocol TypeScript SDK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "ts-node test.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "ethers": "^6.17.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2"
+  }
+}
