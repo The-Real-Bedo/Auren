@@ -2,287 +2,173 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { CONTRACTS, ARC_TESTNET_CHAIN_ID } from '../../config/contracts';
 import { AUREN_API_URL } from '../../config/api';
 
 export default function DevelopersPage() {
   const [activeLang, setActiveLang] = useState<'sdk' | 'mcp' | 'rest'>('sdk');
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+  const config = CONTRACTS[ARC_TESTNET_CHAIN_ID];
 
   return (
-    <div style={{ paddingTop: 64, minHeight: '100vh', background: 'var(--color-paper)' }}>
-      {/* Page Header */}
-      <div className="page-header">
-        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <span className="badge badge-gold">Developer Hub</span>
-            <span className="badge badge-arc">Arc Testnet 5042002</span>
+    <div style={{ paddingTop: 64, minHeight: '100vh', background: '#0A0D14', color: '#F8F6F2' }}>
+
+      {/* ── HEADER ───────────────────────────────────────────────── */}
+      <div style={{ background: '#0D111A', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '4.5rem 0 3.5rem' }}>
+        <div className="editorial-container">
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C8953A' }} />
+            <span className="mono-meta" style={{ color: '#E2B768' }}>
+              Developer Quickstart · Arc Testnet 5042002
+            </span>
           </div>
-          <h1 className="text-headline" style={{ color: 'var(--color-paper)', marginBottom: '0.75rem' }}>
-            Integrate Auren in Minutes
+          <h1 className="section-title" style={{ color: '#F8F6F2', marginBottom: '0.75rem' }}>
+            Give your application an economic engine.
           </h1>
-          <p style={{ color: 'rgba(248,246,242,0.5)', fontSize: '1.0625rem', maxWidth: 640 }}>
-            Eliminate transaction friction for users and autonomous agents.
-            Fund sponsorship budgets with isolated vault capital and share upside from top-line revenue.
+          <p style={{ color: '#8A8F9E', fontSize: '1.0625rem', maxWidth: 640, lineHeight: 1.6, margin: 0 }}>
+            Eliminate onboarding gas friction for users and autonomous agents. Fund sponsorship budgets with isolated vault capital and automate revenue settlement on Arc.
           </p>
         </div>
       </div>
 
-      <div className="container" style={{ paddingTop: '3.5rem', paddingBottom: '6rem' }}>
-        {/* Telemetry: How much value are sponsored users generating? */}
-        <div className="card" style={{ padding: '2.5rem', marginBottom: '3.5rem', background: 'var(--color-paper-white)' }}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <span className="badge badge-green" style={{ marginBottom: '0.5rem' }}>Live Ecosystem Telemetry</span>
-            <h2 style={{ fontSize: '1.375rem', fontWeight: 700, letterSpacing: '-0.025em' }}>
-              How Much Value Are Sponsored Users Generating?
-            </h2>
-          </div>
+      <div className="editorial-container" style={{ paddingTop: '3.5rem', paddingBottom: '7rem' }}>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.25rem' }}>
+        {/* Architecture Flow */}
+        <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '2.5rem', background: '#0D111A', marginBottom: '3.5rem' }}>
+          <div className="mono-meta" style={{ color: '#C8953A', marginBottom: '0.75rem' }}>// Architecture</div>
+          <h2 style={{ fontSize: '1.375rem', fontWeight: 750, color: '#F8F6F2', marginBottom: '1.5rem' }}>
+            How Applications Integrate with Auren
+          </h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2rem' }}>
+            <div>
+              <div className="mono-meta" style={{ color: '#E2B768', marginBottom: '0.5rem' }}>01. INSTALL SDK</div>
+              <p style={{ fontSize: '0.9375rem', color: '#8A8F9E', lineHeight: 1.6, margin: 0 }}>
+                Add <code>@auren/sdk</code> to your frontend or agent runtime. Derive non-custodial Smart Accounts via <code>SimpleAccountFactory</code>.
+              </p>
+            </div>
+            <div>
+              <div className="mono-meta" style={{ color: '#E2B768', marginBottom: '0.5rem' }}>02. DEFINE POLICIES</div>
+              <p style={{ fontSize: '0.9375rem', color: '#8A8F9E', lineHeight: 1.6, margin: 0 }}>
+                Set max gas per action (≤ 0.01 USDC) and daily rate limits. The Policy Engine rejects unapproved calls before signing.
+              </p>
+            </div>
+            <div>
+              <div className="mono-meta" style={{ color: '#E2B768', marginBottom: '0.5rem' }}>03. ROUTE REVENUE</div>
+              <p style={{ fontSize: '0.9375rem', color: '#8A8F9E', lineHeight: 1.6, margin: 0 }}>
+                Direct product payments to your <code>RevenueSplitter</code>. Incoming funds first recover gas principal, then split 50/50 with LPs.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Integration Code Tabs */}
+        <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, overflow: 'hidden', background: '#0D111A', marginBottom: '3.5rem' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#0A0D14', padding: '0.5rem 1rem', gap: '0.5rem' }}>
             {[
-              { label: 'Sponsored Users', value: '142 Active' },
-              { label: 'Sponsored Actions', value: '1,890 Tx' },
-              { label: 'Gas Sponsored', value: '0.45 USDC' },
-              { label: 'Revenue Generated', value: '45.00 USDC' },
-              { label: 'Capital Recovered', value: '100%' },
-              { label: 'Realized Profit', value: '22.50 USDC' },
-            ].map((stat) => (
-              <div key={stat.label} className="card-inset" style={{ padding: '1.25rem' }}>
-                <div className="stat-label" style={{ marginBottom: 4 }}>{stat.label}</div>
-                <div className="stat-value" style={{ fontSize: '1.25rem' }}>{stat.value}</div>
-              </div>
+              { id: 'sdk', label: 'TypeScript SDK' },
+              { id: 'mcp', label: 'Model Context Protocol (MCP)' },
+              { id: 'rest', label: 'HTTP REST API' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveLang(tab.id as any)}
+                style={{
+                  background: activeLang === tab.id ? 'rgba(255,255,255,0.08)' : 'transparent',
+                  color: activeLang === tab.id ? '#F8F6F2' : '#8A8F9E',
+                  fontWeight: 600,
+                  fontSize: '0.8125rem',
+                  border: 'none',
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                }}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
-        </div>
 
-        {/* 5-Step Quickstart Guide */}
-        <div style={{ marginBottom: '3.5rem' }}>
-          <div style={{ marginBottom: '2rem' }}>
-            <span className="badge badge-gold" style={{ marginBottom: '0.5rem' }}>Integration Architecture</span>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.03em' }}>
-              5 Steps to Sponsor Transactions
-            </h2>
-          </div>
-
-          <div style={{ display: 'grid', gap: '1.25rem' }}>
-            {[
-              {
-                step: '01',
-                title: 'Deploy Your Isolated DAppVault',
-                desc: 'Deploy an isolated vault via MudarabahVaultFactory. Specify your LP profit-share ratio (e.g. 50% = 5000 bps).',
-                code: 'const { vaultAddress, paymasterAddress } = await factory.createVault(5000);',
-              },
-              {
-                step: '02',
-                title: 'Configure Sponsorship Policy',
-                desc: 'Register allowed contract targets, function selectors (e.g. purchaseItem()), and daily budget caps in the Auren Policy Engine.',
-                code: 'await policyEngine.registerDApp({ vaultAddress, targetContracts: [myDApp], allowedSelectors: ["0xef032d84"], dailyBudget: ethers.parseEther("50.0") });',
-              },
-              {
-                step: '03',
-                title: 'Install SDK or MCP Server',
-                desc: 'Install @auren/sdk in your web app, or connect your TechnoCore autonomous agent directly via Model Context Protocol (MCP).',
-                code: 'npm install @auren/sdk   # or run: npx auren-mcp',
-              },
-              {
-                step: '04',
-                title: 'Request Sponsorship Authorization',
-                desc: 'When a user or agent prepares a transaction, request approved paymasterAndData envelope from Auren Policy Engine.',
-                code: 'const { paymasterAndData } = await auren.requestSponsorship({ vaultAddress, targetContract, callData, sender });',
-              },
-              {
-                step: '05',
-                title: 'Route Revenue for Settlement',
-                desc: 'When users perform monetized actions, forward payment through your bound RevenueSplitter. Capital is recovered first before profit splits.',
-                code: 'revenueSplitter.processPayment{value: paymentAmount}();',
-              },
-            ].map((s) => (
-              <div key={s.step} className="card" style={{ padding: '1.75rem 2rem' }}>
-                <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-gold)', minWidth: 40 }}>
-                    {s.step}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 260 }}>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.375rem' }}>{s.title}</h3>
-                    <p className="text-sm text-muted" style={{ marginBottom: '1rem', lineHeight: 1.6 }}>{s.desc}</p>
-                    <pre
-                      className="card-inset"
-                      style={{
-                        padding: '0.875rem 1.25rem',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.8125rem',
-                        background: 'var(--color-ink-900)',
-                        color: '#E0E7FF',
-                        overflowX: 'auto',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {s.code}
-                    </pre>
-                  </div>
-                </div>
+          <div style={{ padding: '2rem', fontFamily: 'monospace', fontSize: '0.875rem', lineHeight: 1.7 }}>
+            {activeLang === 'sdk' && (
+              <div>
+                <div style={{ color: '#8A8F9E' }}>// 1. Initialize Auren SDK on Arc Testnet</div>
+                <div style={{ color: '#E2B768' }}>import &#123; AurenSDK &#125; from &apos;@auren/sdk&apos;;</div>
+                <div style={{ color: '#F8F6F2', marginTop: '0.5rem' }}>const sdk = new AurenSDK(&#123;</div>
+                <div style={{ color: '#8A8F9E' }}>  chainId: 5042002,</div>
+                <div style={{ color: '#8A8F9E' }}>  vaultAddress: &apos;{config.vault}&apos;,</div>
+                <div style={{ color: '#8A8F9E' }}>  paymasterAddress: &apos;{config.paymaster}&apos;,</div>
+                <div style={{ color: '#F8F6F2' }}>&#125;);</div>
+                <div style={{ color: '#8A8F9E', marginTop: '1rem' }}>// 2. Build and execute sponsored UserOperation</div>
+                <div style={{ color: '#F8F6F2' }}>const result = await sdk.executeSponsoredUserOp(&#123;</div>
+                <div style={{ color: '#8A8F9E' }}>  target: &apos;{config.demoDApp}&apos;,</div>
+                <div style={{ color: '#8A8F9E' }}>  callData: purchaseCallData,</div>
+                <div style={{ color: '#8A8F9E' }}>  userSigner: walletSigner</div>
+                <div style={{ color: '#F8F6F2' }}>&#125;);</div>
+                <div style={{ color: '#16A34A', marginTop: '0.5rem' }}>console.log(&apos;Confirmed in tx:&apos;, result.transactionHash);</div>
               </div>
-            ))}
+            )}
+
+            {activeLang === 'mcp' && (
+              <div>
+                <div style={{ color: '#8A8F9E' }}>// AI Agents discover and execute via TechnoCore MCP Tools</div>
+                <div style={{ color: '#E2B768' }}>const tools = await mcpClient.listTools();</div>
+                <div style={{ color: '#8A8F9E', marginTop: '0.5rem' }}>// 1. Discover active sponsored opportunities</div>
+                <div style={{ color: '#F8F6F2' }}>const ops = await mcpClient.callTool(&apos;get_opportunities&apos;, &#123;&#125;);</div>
+                <div style={{ color: '#8A8F9E', marginTop: '0.5rem' }}>// 2. Execute sponsored transaction with zero gas</div>
+                <div style={{ color: '#F8F6F2' }}>const tx = await mcpClient.callTool(&apos;execute_sponsored_action&apos;, &#123;</div>
+                <div style={{ color: '#8A8F9E' }}>  vault: &apos;{config.vault}&apos;,</div>
+                <div style={{ color: '#8A8F9E' }}>  action: &apos;purchaseItem&apos;</div>
+                <div style={{ color: '#F8F6F2' }}>&#125;);</div>
+              </div>
+            )}
+
+            {activeLang === 'rest' && (
+              <div>
+                <div style={{ color: '#8A8F9E' }}>// POST {AUREN_API_URL}/sponsor</div>
+                <div style={{ color: '#F8F6F2' }}>curl -X POST {AUREN_API_URL}/sponsor \</div>
+                <div style={{ color: '#8A8F9E' }}>  -H &quot;Content-Type: application/json&quot; \</div>
+                <div style={{ color: '#8A8F9E' }}>  -d &apos;&#123;&quot;userOp&quot;: &#123;...&#125;, &quot;vaultAddress&quot;: &quot;{config.vault}&quot;&#125;&apos;</div>
+                <div style={{ color: '#16A34A', marginTop: '0.75rem' }}># Returns paymasterAndData with cryptographic secp256k1 signature</div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Interactive Code Integration Tabs */}
-        <div className="card" style={{ padding: '2.5rem', marginBottom: '3.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+        {/* Contract Registry */}
+        <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '2.5rem', background: '#0D111A' }}>
+          <div className="mono-meta" style={{ color: '#C8953A', marginBottom: '0.75rem' }}>// Arc Testnet Deployments</div>
+          <h2 style={{ fontSize: '1.375rem', fontWeight: 750, color: '#F8F6F2', marginBottom: '1.5rem' }}>
+            Canonical Protocol Contracts
+          </h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', fontFamily: 'monospace', fontSize: '0.8125rem' }}>
             <div>
-              <h2 style={{ fontSize: '1.375rem', fontWeight: 700, letterSpacing: '-0.025em' }}>
-                Code Integration Examples
-              </h2>
-              <p className="text-sm text-muted">Clean interfaces for web apps, autonomous agents, and REST backends.</p>
+              <span className="mono-meta">Canonical EntryPoint v0.6</span>
+              <div style={{ color: '#F8F6F2', marginTop: '0.25rem' }}>{config.entryPoint}</div>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {[
-                ['sdk', 'TypeScript SDK'],
-                ['mcp', 'TechnoCore MCP Tool'],
-                ['rest', 'REST API'],
-              ].map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveLang(id as any)}
-                  className={`btn btn-sm ${activeLang === id ? 'btn-primary' : 'btn-outline'}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {activeLang === 'sdk' && (
-            <pre
-              className="card-inset"
-              style={{
-                padding: '1.5rem',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.8125rem',
-                background: 'var(--color-ink-900)',
-                color: 'var(--color-paper)',
-                overflowX: 'auto',
-                lineHeight: 1.6,
-              }}
-            >
-{`import { AurenSDK } from '@auren/sdk';
-import { ethers } from 'ethers';
-
-const auren = new AurenSDK({
-  rpcUrl: 'https://rpc.testnet.arc.network',
-  chainId: 5042002
-});
-
-// 1. Check if user action is eligible for gas sponsorship
-const eligibility = await auren.checkSponsorship({
-  vaultAddress: '0x851bD1E5d9CdeD0f183e861dB98157641C826a74',
-  targetContract: '0xFE6389811C6690CC7B367EaEfdF344Ed1eFbd5f6',
-  callData: '0xef032d84', // purchaseItem()
-  sender: userAddress,
-  maxCost: ethers.parseEther('0.005').toString()
-});
-
-if (eligibility.eligible) {
-  // 2. Request Paymaster sponsorship authorization
-  const auth = await auren.requestSponsorship({ ... });
-
-  // 3. Dispatch sponsored transaction via ERC-4337 EntryPoint
-  console.log('Sponsorship paymasterAndData:', auth.paymasterAndData);
-}`}
-            </pre>
-          )}
-
-          {activeLang === 'mcp' && (
-            <pre
-              className="card-inset"
-              style={{
-                padding: '1.5rem',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.8125rem',
-                background: 'var(--color-ink-900)',
-                color: 'var(--color-paper)',
-                overflowX: 'auto',
-                lineHeight: 1.6,
-              }}
-            >
-{`// TechnoCore Agent tool call via standard MCP (Model Context Protocol)
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "check_sponsorship",
-    "arguments": {
-      "vaultAddress": "0x851bD1E5d9CdeD0f183e861dB98157641C826a74",
-      "targetContract": "0xFE6389811C6690CC7B367EaEfdF344Ed1eFbd5f6",
-      "callData": "0xef032d84",
-      "sender": "0x30080EF681349fAca4808a78a292264A5310Ce2b",
-      "maxCost": "5000000000000000",
-      "chainId": 5042002
-    }
-  }
-}`}
-            </pre>
-          )}
-
-          {activeLang === 'rest' && (
-            <pre
-              className="card-inset"
-              style={{
-                padding: '1.5rem',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.8125rem',
-                background: 'var(--color-ink-900)',
-                color: 'var(--color-paper)',
-                overflowX: 'auto',
-                lineHeight: 1.6,
-              }}
-            >
-{`# Pre-flight sponsorship check
-curl -X POST ${AUREN_API_URL}/agent/check-sponsorship \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "vaultAddress": "0x851bD1E5d9CdeD0f183e861dB98157641C826a74",
-    "targetContract": "0xFE6389811C6690CC7B367EaEfdF344Ed1eFbd5f6",
-    "callData": "0xef032d84",
-    "sender": "0x30080EF681349fAca4808a78a292264A5310Ce2b",
-    "maxCost": "5000000000000000",
-    "chainId": 5042002
-  }'`}
-            </pre>
-          )}
-        </div>
-
-        {/* Collapsible Advanced Protocol Details */}
-        <div className="card" style={{ padding: '2rem' }}>
-          <div
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-          >
             <div>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>
-                {showAdvanced ? '▼' : '▶'} Advanced / Protocol Architecture Details
-              </h3>
-              <p className="text-xs text-muted" style={{ margin: '4px 0 0' }}>
-                Underlying contract mechanics, Mudarabah recovery rules, and EntryPoint v0.6 compatibility.
-              </p>
+              <span className="mono-meta">InvestmentPaymaster</span>
+              <div style={{ color: '#F8F6F2', marginTop: '0.25rem' }}>{config.paymaster}</div>
             </div>
-            <span className="badge badge-neutral">{showAdvanced ? 'Collapse' : 'Expand'}</span>
+            <div>
+              <span className="mono-meta">SimpleAccountFactory</span>
+              <div style={{ color: '#F8F6F2', marginTop: '0.25rem' }}>{config.accountFactory}</div>
+            </div>
+            <div>
+              <span className="mono-meta">DemoDApp</span>
+              <div style={{ color: '#F8F6F2', marginTop: '0.25rem' }}>{config.demoDApp}</div>
+            </div>
+            <div>
+              <span className="mono-meta">DAppVault</span>
+              <div style={{ color: '#F8F6F2', marginTop: '0.25rem' }}>{config.vault}</div>
+            </div>
+            <div>
+              <span className="mono-meta">RevenueSplitter</span>
+              <div style={{ color: '#F8F6F2', marginTop: '0.25rem' }}>{config.splitter}</div>
+            </div>
           </div>
-
-          {showAdvanced && (
-            <div style={{ marginTop: '1.75rem', paddingTop: '1.75rem', borderTop: '1px solid var(--color-ink-100)', display: 'grid', gap: '1rem', fontSize: '0.875rem', lineHeight: 1.6 }}>
-              <p>
-                <strong>Capital First, Profit Second:</strong> When DApp revenue arrives at <code>RevenueSplitter</code>, 100% of funds flow to <code>DAppVault.recordCapitalRecovery()</code> until <code>unrecoveredCapital() == 0</code>. Only then does the profit split activate.
-              </p>
-              <p>
-                <strong>Isolated Security:</strong> Every DApp receives its own isolated vault and bound paymaster. Compromise or depletion of one DApp&apos;s budget has zero spillover effect on other vaults.
-              </p>
-              <p>
-                <strong>Native USDC Mechanics:</strong> Arc Network handles USDC as the native L1 gas token with 18 decimals, transferred natively via <code>msg.value</code>.
-              </p>
-            </div>
-          )}
         </div>
+
       </div>
     </div>
   );

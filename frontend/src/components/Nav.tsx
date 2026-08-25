@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { BrowserProvider } from 'ethers';
 
-export function LogoMark({ size = 26 }: { size?: number }) {
+export function LogoMark({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="14" cy="14" r="13" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25" />
@@ -22,9 +22,9 @@ export function LogoMark({ size = 26 }: { size?: number }) {
 }
 
 const NAV_LINKS = [
-  { href: '/demo', label: 'Try App', highlight: true },
-  { href: '/agent-demo', label: 'Agent Demo' },
+  { href: '/demo', label: 'Product' },
   { href: '/build', label: 'Developers' },
+  { href: '/agent-demo', label: 'Agents' },
   { href: '/capital', label: 'Capital' },
   { href: '/explore', label: 'Explore' },
   { href: '/technocore', label: 'TechnoCore' },
@@ -37,7 +37,7 @@ export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -68,27 +68,24 @@ export default function Nav() {
         height: 64,
         display: 'flex',
         alignItems: 'center',
-        background: scrolled ? 'rgba(10,13,20,0.92)' : 'rgba(10,13,20,0.75)',
-        backdropFilter: 'blur(16px) saturate(180%)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        transition: 'all 0.25s ease',
+        background: scrolled ? 'rgba(10, 13, 20, 0.95)' : 'rgba(10, 13, 20, 0.8)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        transition: 'all 0.15s ease',
       }}
     >
       <div
-        className="container"
+        className="editorial-container-wide"
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           height: '100%',
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: '0 1.5rem',
           width: '100%',
         }}
       >
-        {/* Brand & Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Left: Brand & Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <Link
             href="/"
             style={{
@@ -99,12 +96,12 @@ export default function Nav() {
               color: '#F8F6F2',
             }}
           >
-            <LogoMark size={28} />
+            <LogoMark size={24} />
             <span
               style={{
-                fontWeight: 800,
-                fontSize: '1.05rem',
-                letterSpacing: '0.12em',
+                fontWeight: 850,
+                fontSize: '1rem',
+                letterSpacing: '0.1em',
               }}
             >
               AUREN
@@ -116,108 +113,80 @@ export default function Nav() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.35rem',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '999px',
-              background: 'rgba(200,149,58,0.1)',
-              border: '1px solid rgba(200,149,58,0.25)',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              letterSpacing: '0.04em',
-              color: '#C8953A',
+              padding: '0.15rem 0.5rem',
+              borderRadius: 4,
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              fontSize: '0.6875rem',
+              fontFamily: 'monospace',
+              color: '#8A8F9E',
             }}
           >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: '#C8953A',
-                boxShadow: '0 0 6px rgba(200,149,58,0.8)',
-              }}
-            />
-            Arc Testnet
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#C8953A' }} />
+            ARC 5042002
           </div>
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Center: Navigation Links */}
         <nav
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '1.5rem',
+            gap: '1.75rem',
           }}
           className="desktop-nav"
         >
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href;
-            if (link.highlight) {
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.4rem 0.85rem',
-                    borderRadius: '6px',
-                    background: 'rgba(200,149,58,0.15)',
-                    border: '1px solid rgba(200,149,58,0.35)',
-                    color: '#F8F6F2',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: '#4ade80',
-                    }}
-                  />
-                  {link.label}
-                </Link>
-              );
-            }
-
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 style={{
-                  fontSize: '0.88rem',
+                  fontSize: '0.875rem',
                   fontWeight: isActive ? 600 : 500,
                   color: isActive ? '#F8F6F2' : '#8A8F9E',
                   textDecoration: 'none',
-                  transition: 'color 0.2s ease',
+                  transition: 'color 0.15s ease',
                 }}
               >
                 {link.label}
               </Link>
             );
           })}
+        </nav>
 
-          {/* Wallet Connect */}
+        {/* Right: Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <Link
+            href="/demo"
+            className="btn-primary"
+            style={{
+              padding: '0.45rem 0.95rem',
+              fontSize: '0.8125rem',
+              fontWeight: 700,
+            }}
+          >
+            Try Auren
+          </Link>
+
           <button
             onClick={connectWallet}
             style={{
               padding: '0.45rem 0.95rem',
-              borderRadius: '6px',
-              background: account ? 'rgba(255,255,255,0.06)' : '#C8953A',
-              border: account ? '1px solid rgba(255,255,255,0.12)' : 'none',
-              color: account ? '#F8F6F2' : '#0A0D14',
-              fontSize: '0.85rem',
-              fontWeight: 700,
+              borderRadius: 6,
+              background: account ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: '#F8F6F2',
+              fontSize: '0.8125rem',
+              fontFamily: account ? 'monospace' : 'inherit',
+              fontWeight: 600,
               cursor: 'pointer',
-              transition: 'opacity 0.2s',
             }}
           >
-            {account ? `${account.slice(0, 6)}…${account.slice(-4)}` : 'Connect Wallet'}
+            {account ? `${account.slice(0, 6)}…${account.slice(-4)}` : 'Connect'}
           </button>
-        </nav>
+        </div>
       </div>
     </header>
   );

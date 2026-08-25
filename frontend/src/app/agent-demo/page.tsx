@@ -518,28 +518,28 @@ export default function AgentDemoPage() {
   };
 
   return (
-    <div style={{ paddingTop: 64, minHeight: '100vh', background: 'var(--color-paper)' }}>
+    <div style={{ paddingTop: 64, minHeight: '100vh', background: '#0A0D14', color: '#F8F6F2' }}>
       {/* Page Header */}
-      <div className="page-header">
-        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ background: '#0D111A', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '4.5rem 0 3.5rem' }}>
+        <div className="editorial-container" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-            <span className="badge badge-gold">ERC-4337 Account Abstraction</span>
-            <span className="badge badge-arc">Arc Testnet 5042002</span>
-            <span className="badge badge-green">100% Gas Sponsored by Auren</span>
+            <span className="mono-meta" style={{ color: '#E2B768', background: 'rgba(200,149,58,0.1)', padding: '0.2rem 0.5rem', borderRadius: 4, border: '1px solid rgba(200,149,58,0.25)' }}>ERC-4337 Account Abstraction</span>
+            <span className="mono-meta" style={{ color: '#8A8F9E', background: 'rgba(255,255,255,0.04)', padding: '0.2rem 0.5rem', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)' }}>Arc Testnet 5042002</span>
+            <span className="mono-meta" style={{ color: '#4ADE80', background: 'rgba(22,163,74,0.1)', padding: '0.2rem 0.5rem', borderRadius: 4, border: '1px solid rgba(22,163,74,0.25)' }}>100% Gas Sponsored</span>
           </div>
-          <h1 className="text-headline" style={{ color: 'var(--color-paper)', marginBottom: '0.75rem' }}>
+          <h1 className="section-title" style={{ color: '#F8F6F2', marginBottom: '0.75rem' }}>
             Autonomous Agent Execution Console
           </h1>
-          <p style={{ color: 'rgba(248,246,242,0.5)', fontSize: '1.0625rem', maxWidth: 640, lineHeight: 1.6 }}>
+          <p style={{ color: '#8A8F9E', fontSize: '1.0625rem', maxWidth: 640, lineHeight: 1.6 }}>
             Execute real ERC-4337 sponsored UserOperations on Arc Testnet.
             Your EOA signs the operation with zero gas cost; Auren Paymaster pays the gas from vault capital through Canonical EntryPoint v0.6.
           </p>
         </div>
       </div>
 
-      <div className="container" style={{ paddingTop: '2.5rem', paddingBottom: '6rem' }}>
+      <div className="editorial-container" style={{ paddingTop: '3rem', paddingBottom: '6rem' }}>
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2.5rem', borderBottom: '1px solid var(--color-ink-100)', paddingBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
           {[
             { id: 'live', label: '1. Live ERC-4337 Console' },
             { id: 'evidence', label: '2. Genesis Benchmark Proof' },
@@ -548,11 +548,13 @@ export default function AgentDemoPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className="btn btn-ghost btn-sm"
               style={{
                 fontWeight: activeTab === tab.id ? 700 : 500,
-                color: activeTab === tab.id ? 'var(--color-ink)' : 'var(--color-ink-400)',
-                borderBottom: activeTab === tab.id ? '2px solid var(--color-gold)' : 'none',
+                color: activeTab === tab.id ? '#F8F6F2' : '#8A8F9E',
+                borderBottom: activeTab === tab.id ? '2px solid #C8953A' : 'none',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
                 borderRadius: 0,
                 padding: '0.625rem 1rem',
               }}
@@ -567,7 +569,6 @@ export default function AgentDemoPage() {
           <div>
             {/* Control & Wallet Connection Bar */}
             <div
-              className="card"
               style={{
                 padding: '1.75rem 2rem',
                 marginBottom: '2rem',
@@ -576,14 +577,16 @@ export default function AgentDemoPage() {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '1.5rem',
-                background: 'var(--color-paper-white)',
+                background: '#0D111A',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 8,
               }}
             >
               <div>
                 <div style={{ fontWeight: 700, fontSize: '1.125rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span>ERC-4337 Sponsored Execution</span>
-                  <span className="badge badge-green" style={{ fontSize: '0.6875rem' }}>
-                    {executionResult ? '✓ Gas Sponsored by Auren' : 'Arc Testnet Sponsorship Eligible'}
+                  <span className="mono-meta" style={{ color: '#4ADE80' }}>
+                    {executionResult ? '✓ Gas Sponsored by Auren' : 'Arc Testnet Eligible'}
                   </span>
                 </div>
                 <div className="text-sm text-muted">

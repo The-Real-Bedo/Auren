@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 
-/* ── Custom SVG Logo ────────────────────────────────────────── */
-export function LogoMark({ size = 28 }: { size?: number }) {
+export function LogoMark({ size = 26 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="14" cy="14" r="13" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25" />
@@ -20,424 +18,451 @@ export function LogoMark({ size = 28 }: { size?: number }) {
   );
 }
 
-/* ── Primary 5-Step Loop ────────────────────────────────────── */
-const FLOW_STEPS = [
-  {
-    step: '01',
-    name: 'Discover',
-    title: 'Autonomous Discovery',
-    body: 'Autonomous agents and clients query registered Arc ventures through the Auren registry and MCP tools.',
-  },
-  {
-    step: '02',
-    name: 'Evaluate',
-    title: 'Policy Engine Check',
-    body: 'Policy engine validates gas limits, contract whitelists, allowed function selectors, and daily budgets.',
-  },
-  {
-    step: '03',
-    name: 'Sponsor',
-    title: 'Paymaster Authorization',
-    body: 'Auren Paymaster signs cryptographic authorization envelopes (ERC-4337 v0.6) without user gas.',
-  },
-  {
-    step: '04',
-    name: 'Execute',
-    title: 'On-Chain Execution',
-    body: 'Relayers broadcast UserOperations to EntryPoint; transactions settle atomically on Arc Testnet.',
-  },
-  {
-    step: '05',
-    name: 'Settle',
-    title: 'Revenue-First Settlement',
-    body: 'DApp revenue flows to isolated vaults, recovering initial gas capital before distributing profit splits.',
-  },
-];
-
-/* ── 3-Audience Profiles ────────────────────────────────────── */
-const AUDIENCES = [
-  {
-    id: 'users',
-    title: 'For Users',
-    subtitle: 'Zero-Friction Applications',
-    summary: 'Interact with applications without buying or holding transaction gas tokens for every single action.',
-    points: [
-      'Zero gas friction on eligible actions',
-      'Non-custodial: you maintain 100% control of your wallet',
-      'Transparent on-chain execution with zero hidden costs',
-    ],
-    cta: 'Explore User Experience',
-    href: '/users',
-  },
-  {
-    id: 'developers',
-    title: 'For Developers',
-    subtitle: 'Accelerate DApp Onboarding',
-    summary: 'Integrate Paymasters and isolated liquidity to sponsor activity and automate top-line revenue settlement.',
-    points: [
-      'Plug-and-play TypeScript SDK & ERC-4337 Paymaster',
-      'Configurable per-action gas rules & daily budgets',
-      'Automated 50/50 profit splits via RevenueSplitter',
-    ],
-    cta: 'Developer Quickstart',
-    href: '/build',
-  },
-  {
-    id: 'capital',
-    title: 'For Capital Providers',
-    subtitle: 'Venture Liquidity & Growth',
-    summary: 'Supply capital into isolated vaults to sponsor application activity with revenue-first principal recovery.',
-    points: [
-      'Isolated risk per DApp (no cross-pool contagion)',
-      'Principal recovery before profit distribution (Mudarabah-inspired)',
-      'Real-time on-chain accounting and TVL telemetry',
-    ],
-    cta: 'Explore Capital Vaults',
-    href: '/capital',
-  },
-];
-
 export default function Home() {
-  const [selectedAudience, setSelectedAudience] = useState<'users' | 'developers' | 'capital'>('users');
-  const activeAudience = AUDIENCES.find((a) => a.id === selectedAudience) || AUDIENCES[0];
-
   return (
     <div style={{ background: '#0A0D14', color: '#F8F6F2', minHeight: '100vh', overflowX: 'hidden' }}>
 
-      {/* ── HERO SECTION ────────────────────────────────────────── */}
-      <section
-        style={{
-          position: 'relative',
-          paddingTop: '8rem',
-          paddingBottom: '5rem',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          backgroundImage: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(200,149,58,0.12), transparent)',
-        }}
-      >
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem', textAlign: 'center' }}>
+      {/* ── SECTION 01: HERO ──────────────────────────────────────── */}
+      <section style={{ paddingTop: '10rem', paddingBottom: '7rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="editorial-container">
 
-          {/* Status Badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.85rem', borderRadius: '999px', background: 'rgba(200,149,58,0.12)', border: '1px solid rgba(200,149,58,0.3)', marginBottom: '1.75rem' }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#C8953A', boxShadow: '0 0 8px #C8953A' }} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.08em', color: '#C8953A' }}>
-              PUBLIC TESTNET — ARC NETWORK (CHAIN 5042002)
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2.5rem' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C8953A' }} />
+            <span className="mono-meta" style={{ color: '#E2B768' }}>
+              Public Testnet · Arc Network (Chain 5042002)
             </span>
           </div>
 
-          {/* Main Title */}
-          <h1
-            style={{
-              fontSize: 'clamp(2.5rem, 5.5vw, 4.2rem)',
-              fontWeight: 800,
-              lineHeight: 1.1,
-              letterSpacing: '-0.03em',
-              marginBottom: '1.25rem',
-              color: '#F8F6F2',
-            }}
-          >
-            The economic layer for <br />
-            <span
-              style={{
-                background: 'linear-gradient(135deg, #C8953A 0%, #E2B768 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              autonomous applications.
-            </span>
+          <h1 className="hero-title" style={{ marginBottom: '1.75rem' }}>
+            AUREN
           </h1>
 
-          {/* Tagline & Elevator Pitch */}
-          <p
-            style={{
-              fontSize: '1.25rem',
-              fontWeight: 500,
-              color: '#C8953A',
-              marginBottom: '0.75rem',
-            }}
-          >
+          <p style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', fontWeight: 750, letterSpacing: '-0.035em', lineHeight: 1.15, maxWidth: 840, marginBottom: '1rem', color: '#F8F6F2' }}>
+            The economic layer for autonomous applications.
+          </p>
+
+          <p style={{ fontSize: '1.25rem', fontWeight: 500, color: '#C8953A', marginBottom: '3rem', letterSpacing: '0.01em' }}>
             Fund growth. Enable agents.
           </p>
 
-          <p
-            style={{
-              fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
-              lineHeight: 1.6,
-              color: '#8A8F9E',
-              maxWidth: 760,
-              margin: '0 auto 2.5rem auto',
-            }}
-          >
-            Auren helps applications on Arc sponsor user and agent activity while enforcing economic policies, funding growth through isolated vaults, and settling generated revenue on-chain.
-          </p>
-
-          {/* Primary Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <Link
-              href="/demo"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.85rem 1.75rem',
-                borderRadius: '8px',
-                background: '#C8953A',
-                color: '#0A0D14',
-                fontWeight: 700,
-                fontSize: '0.98rem',
-                textDecoration: 'none',
-                boxShadow: '0 4px 14px rgba(200,149,58,0.3)',
-                transition: 'transform 0.2s, opacity 0.2s',
-              }}
-            >
-              Try Auren (Consumer Demo)
-              <span>→</span>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <Link href="/demo" className="btn-primary">
+              Try Auren (Consumer Demo) →
             </Link>
-
-            <Link
-              href="/agent-demo"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.85rem 1.75rem',
-                borderRadius: '8px',
-                background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(200,149,58,0.4)',
-                color: '#F8F6F2',
-                fontWeight: 600,
-                fontSize: '0.98rem',
-                textDecoration: 'none',
-                transition: 'background 0.2s',
-              }}
-            >
+            <Link href="/agent-demo" className="btn-secondary">
               Watch an Agent Execute
-              <span style={{ color: '#C8953A' }}>🤖</span>
-            </Link>
-
-            <Link
-              href="/build"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '0.85rem 1.75rem',
-                borderRadius: '8px',
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                color: '#F8F6F2',
-                fontWeight: 600,
-                fontSize: '0.98rem',
-                textDecoration: 'none',
-                transition: 'background 0.2s',
-              }}
-            >
-              Build with Auren
             </Link>
           </div>
 
         </div>
       </section>
 
-      {/* ── 3-AUDIENCE SELECTOR ─────────────────────────────────── */}
-      <section style={{ padding: '4.5rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#0D111A' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      {/* ── SECTION 02: THE PROBLEM ───────────────────────────────── */}
+      <section style={{ padding: '8rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#0D111A' }}>
+        <div className="editorial-container">
 
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
-              Built for the Entire Autonomous Ecosystem
-            </h2>
-            <p style={{ color: '#8A8F9E', fontSize: '0.98rem' }}>
-              Select your perspective to see how Auren unlocks economic coordination on Arc.
-            </p>
+          <div className="mono-meta" style={{ marginBottom: '1.5rem', color: '#C8953A' }}>
+            01 / The Friction
           </div>
 
-          {/* Tab Controls */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              marginBottom: '2.5rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            {AUDIENCES.map((aud) => {
-              const isSelected = aud.id === selectedAudience;
-              return (
-                <button
-                  key={aud.id}
-                  onClick={() => setSelectedAudience(aud.id as any)}
-                  style={{
-                    padding: '0.65rem 1.5rem',
-                    borderRadius: '8px',
-                    border: isSelected ? '1px solid #C8953A' : '1px solid rgba(255,255,255,0.08)',
-                    background: isSelected ? 'rgba(200,149,58,0.15)' : 'rgba(255,255,255,0.02)',
-                    color: isSelected ? '#F8F6F2' : '#8A8F9E',
-                    fontWeight: isSelected ? 700 : 500,
-                    fontSize: '0.92rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {aud.title}
-                </button>
-              );
-            })}
-          </div>
+          <h2 className="section-title" style={{ maxWidth: 800, marginBottom: '4rem' }}>
+            Autonomous applications can act.<br />
+            <span style={{ color: '#8A8F9E' }}>But who pays for the action?</span>
+          </h2>
 
-          {/* Tab Panel */}
-          <div
-            style={{
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px',
-              padding: '2.5rem',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '2.5rem',
-              alignItems: 'center',
-            }}
-          >
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '3rem' }}>
             <div>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.1em', color: '#C8953A', textTransform: 'uppercase' }}>
-                {activeAudience.subtitle}
-              </span>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0.5rem 0 1rem 0' }}>
-                {activeAudience.title}
-              </h3>
-              <p style={{ color: '#8A8F9E', fontSize: '1rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                {activeAudience.summary}
+              <div className="mono-meta" style={{ marginBottom: '0.75rem' }}>Gas Tokens</div>
+              <p style={{ fontSize: '1.0625rem', color: '#8A8F9E', lineHeight: 1.6, margin: 0 }}>
+                Every blockchain action demands native gas tokens. Users abandon applications during onboarding; AI agents halt execution when wallets run dry.
               </p>
-              <Link
-                href={activeAudience.href}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  color: '#C8953A',
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  textDecoration: 'none',
-                }}
-              >
-                {activeAudience.cta} →
+            </div>
+            <div>
+              <div className="mono-meta" style={{ marginBottom: '0.75rem' }}>Uncontrolled Risk</div>
+              <p style={{ fontSize: '1.0625rem', color: '#8A8F9E', lineHeight: 1.6, margin: 0 }}>
+                Naïve paymasters bleed capital to bots and spam. Applications require enforceable cryptographic policies before paying for transactions.
+              </p>
+            </div>
+            <div>
+              <div className="mono-meta" style={{ marginBottom: '0.75rem' }}>Unrecovered Capital</div>
+              <p style={{ fontSize: '1.0625rem', color: '#8A8F9E', lineHeight: 1.6, margin: 0 }}>
+                Sponsoring user growth is costly. Without automated revenue routing, developers burn venture capital without recovering principal.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── SECTION 03: AUREN ─────────────────────────────────────── */}
+      <section style={{ padding: '8rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="editorial-container">
+
+          <div className="mono-meta" style={{ marginBottom: '1.5rem', color: '#C8953A' }}>
+            02 / The Solution
+          </div>
+
+          <h2 className="section-title" style={{ maxWidth: 900, marginBottom: '5rem' }}>
+            Auren turns application activity into an economic system.
+          </h2>
+
+          {/* Linear Economic Diagram */}
+          <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '3rem 2rem', background: '#0D111A' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '2rem', textAlign: 'center' }}>
+              <div>
+                <span className="mono-meta" style={{ color: '#C8953A', display: 'block', marginBottom: '0.5rem' }}>01. INFLOW</span>
+                <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#F8F6F2' }}>Capital Vault</div>
+                <div style={{ fontSize: '0.8125rem', color: '#8A8F9E', marginTop: '0.25rem' }}>Isolated venture USDC</div>
+              </div>
+              <div style={{ color: '#525766', fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>→</div>
+              <div>
+                <span className="mono-meta" style={{ color: '#C8953A', display: 'block', marginBottom: '0.5rem' }}>02. POLICY</span>
+                <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#F8F6F2' }}>Rule Engine</div>
+                <div style={{ fontSize: '0.8125rem', color: '#8A8F9E', marginTop: '0.25rem' }}>≤ 0.01 USDC gas envelope</div>
+              </div>
+              <div style={{ color: '#525766', fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>→</div>
+              <div>
+                <span className="mono-meta" style={{ color: '#C8953A', display: 'block', marginBottom: '0.5rem' }}>03. EXECUTION</span>
+                <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#F8F6F2' }}>EntryPoint v0.6</div>
+                <div style={{ fontSize: '0.8125rem', color: '#8A8F9E', marginTop: '0.25rem' }}>Atomic Arc settlement</div>
+              </div>
+              <div style={{ color: '#525766', fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>→</div>
+              <div>
+                <span className="mono-meta" style={{ color: '#C8953A', display: 'block', marginBottom: '0.5rem' }}>04. SETTLEMENT</span>
+                <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#F8F6F2' }}>Revenue Splitter</div>
+                <div style={{ fontSize: '0.8125rem', color: '#8A8F9E', marginTop: '0.25rem' }}>Principal recovery + 50/50</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── SECTION 04: THREE PARTICIPANTS ────────────────────────── */}
+      <section style={{ padding: '8rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#0D111A' }}>
+        <div className="editorial-container">
+
+          <div className="mono-meta" style={{ marginBottom: '1.5rem', color: '#C8953A' }}>
+            03 / Participants
+          </div>
+
+          <h2 className="section-title" style={{ maxWidth: 840, marginBottom: '4.5rem' }}>
+            One economic layer.<br />
+            Three ways to participate.
+          </h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+
+            {/* Panel 1: User */}
+            <div style={{ border: '1px solid rgba(255,255,255,0.08)', padding: '2.5rem 2rem', borderRadius: 8, background: '#0A0D14' }}>
+              <div className="mono-meta" style={{ color: '#C8953A', marginBottom: '1rem' }}>01 / USER</div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 750, color: '#F8F6F2', marginBottom: '1rem', lineHeight: 1.2 }}>
+                Use applications.<br />Gas is sponsored.
+              </h3>
+              <p style={{ color: '#8A8F9E', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+                Interact with applications with zero friction. Keep complete non-custodial ownership of your wallet and only pay the real product price.
+              </p>
+              <Link href="/demo" style={{ color: '#C8953A', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
+                Try Consumer Demo →
               </Link>
             </div>
 
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: '1.5rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#8A8F9E', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Key Advantages
-              </h4>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {activeAudience.points.map((pt, idx) => (
-                  <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.92rem', color: '#EDE8DF' }}>
-                    <span style={{ color: '#C8953A', fontWeight: 800 }}>✓</span>
-                    <span>{pt}</span>
-                  </li>
-                ))}
-              </ul>
+            {/* Panel 2: Developer */}
+            <div style={{ border: '1px solid rgba(255,255,255,0.08)', padding: '2.5rem 2rem', borderRadius: 8, background: '#0A0D14' }}>
+              <div className="mono-meta" style={{ color: '#C8953A', marginBottom: '1rem' }}>02 / DEVELOPER</div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 750, color: '#F8F6F2', marginBottom: '1rem', lineHeight: 1.2 }}>
+                Acquire users.<br />Fund activity.<br />Measure revenue.
+              </h3>
+              <p style={{ color: '#8A8F9E', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+                Integrate gas sponsorship via the TypeScript SDK. Draw liquidity from venture vaults and automate top-line revenue settlement back to LPs.
+              </p>
+              <Link href="/build" style={{ color: '#C8953A', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
+                Build with Auren →
+              </Link>
+            </div>
+
+            {/* Panel 3: Capital */}
+            <div style={{ border: '1px solid rgba(255,255,255,0.08)', padding: '2.5rem 2rem', borderRadius: 8, background: '#0A0D14' }}>
+              <div className="mono-meta" style={{ color: '#C8953A', marginBottom: '1rem' }}>03 / CAPITAL</div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 750, color: '#F8F6F2', marginBottom: '1rem', lineHeight: 1.2 }}>
+                Fund growth.<br />Recover capital.<br />Share profit.
+              </h3>
+              <p style={{ color: '#8A8F9E', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+                Deploy USDC into isolated vaults to sponsor application adoption. 100% of top-line revenue first repays deployed gas principal before 50/50 profit splitting.
+              </p>
+              <Link href="/capital" style={{ color: '#C8953A', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
+                Explore Capital Vaults →
+              </Link>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── SECTION 05: LIVE PROOF ────────────────────────────────── */}
+      <section style={{ padding: '8rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="editorial-container">
+
+          <div className="mono-meta" style={{ marginBottom: '1.5rem', color: '#C8953A' }}>
+            04 / On-Chain Proof
+          </div>
+
+          <h2 className="section-title" style={{ maxWidth: 840, marginBottom: '3.5rem' }}>
+            Auren is already running on Arc.
+          </h2>
+
+          {/* Single Verified Transaction Display */}
+          <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '2.5rem', background: '#0D111A' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <span className="pill-badge pill-badge-green" style={{ marginBottom: '0.5rem' }}>
+                  ✓ Confirmed on Arc Testnet (Chain 5042002)
+                </span>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#F8F6F2', margin: 0 }}>
+                  Real Consumer Purchase Execution
+                </h3>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span className="mono-meta">Block Height</span>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'monospace', color: '#F8F6F2' }}>#58802235</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.5rem', marginBottom: '2rem' }}>
+              <div>
+                <span className="mono-meta">Transaction Hash</span>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                  <a
+                    href="https://testnet.arcscan.app/tx/0x635c22578ea72c9f97f4a609fcd06cc90697a6d069e3011393b684493139d197"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#E2B768', textDecoration: 'underline' }}
+                  >
+                    0x635c2257...39d197 ↗
+                  </a>
+                </div>
+              </div>
+              <div>
+                <span className="mono-meta">Gas Paid by Auren</span>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#16A34A', fontWeight: 700, marginTop: '0.25rem' }}>
+                  0.00292 USDC
+                </div>
+              </div>
+              <div>
+                <span className="mono-meta">User Gas Cost</span>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#F8F6F2', fontWeight: 700, marginTop: '0.25rem' }}>
+                  0.00 USDC (100% Free)
+                </div>
+              </div>
+              <div>
+                <span className="mono-meta">Canonical EntryPoint</span>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#8A8F9E', marginTop: '0.25rem' }}>
+                  0x5FF1...2789 (v0.6)
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <span style={{ fontSize: '0.8125rem', color: '#8A8F9E' }}>
+                Smart Account: <code>0xA32F...49CE</code> · Item Price: <code>10.00 USDC</code>
+              </span>
+              <Link href="/agent-demo" style={{ color: '#C8953A', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
+                Watch Real-Time Execution Console →
+              </Link>
             </div>
           </div>
 
         </div>
       </section>
 
-      {/* ── 5-STEP EXECUTION LOOP ──────────────────────────────── */}
-      <section style={{ padding: '5rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      {/* ── SECTION 06: AGENTS ────────────────────────────────────── */}
+      <section style={{ padding: '8rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#0D111A' }}>
+        <div className="editorial-container">
 
-          <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.12em', color: '#C8953A', textTransform: 'uppercase' }}>
-              The Autonomous Loop
-            </span>
-            <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.25rem)', fontWeight: 800, marginTop: '0.5rem', letterSpacing: '-0.02em' }}>
-              Discover → Evaluate → Sponsor → Execute → Settle
-            </h2>
-            <p style={{ color: '#8A8F9E', maxWidth: 640, margin: '0.5rem auto 0 auto', fontSize: '0.95rem' }}>
-              A complete on-chain lifecycle ensuring applications are funded, transactions are policy-verified, and revenue is automatically recovered.
-            </p>
+          <div className="mono-meta" style={{ marginBottom: '1.5rem', color: '#C8953A' }}>
+            05 / Agent Runtime
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1.25rem' }}>
-            {FLOW_STEPS.map((step) => (
-              <div
-                key={step.step}
-                style={{
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: '10px',
-                  padding: '1.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.6rem',
-                }}
-              >
-                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#C8953A' }}>
-                  {step.step}
-                </span>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#F8F6F2' }}>
-                  {step.name}
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: '#8A8F9E', lineHeight: 1.5, margin: 0 }}>
-                  {step.body}
-                </p>
-              </div>
-            ))}
+          <h2 className="section-title" style={{ maxWidth: 840, marginBottom: '3rem' }}>
+            Agents can act.<br />
+            <span style={{ color: '#8A8F9E' }}>Auren makes action economic.</span>
+          </h2>
+
+          <p style={{ fontSize: '1.125rem', color: '#8A8F9E', maxWidth: 720, lineHeight: 1.6, marginBottom: '3.5rem' }}>
+            Integrated with TechnoCore for decentralized agent identity and MCP state, Auren allows autonomous agents to evaluate opportunities, obtain cryptographic gas sponsorship, and settle results on Arc.
+          </p>
+
+          <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '2rem', background: '#0A0D14', marginBottom: '2.5rem' }}>
+            <div className="mono-meta" style={{ color: '#8A8F9E', marginBottom: '1rem' }}>// Execution Flow</div>
+            <div style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#F8F6F2', lineHeight: 2 }}>
+              <span style={{ color: '#E2B768' }}>TECHNOCORE</span> (did:key &amp; MCP state) → <br />
+              <span style={{ color: '#E2B768' }}>AUREN POLICY</span> (rule verification &amp; 0.01 USDC ceiling) → <br />
+              <span style={{ color: '#E2B768' }}>INVESTMENT PAYMASTER</span> (secp256k1 signature) → <br />
+              <span style={{ color: '#16A34A' }}>ARC TESTNET</span> (atomic on-chain execution)
+            </div>
           </div>
+
+          <Link href="/agent-demo" className="btn-secondary">
+            Watch an Agent Execute →
+          </Link>
 
         </div>
       </section>
 
-      {/* ── LIVE PROOF TEASER ──────────────────────────────────── */}
-      <section style={{ padding: '4.5rem 1.5rem', background: '#0D111A' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ padding: '2.5rem', borderRadius: '12px', background: 'rgba(200,149,58,0.04)', border: '1px solid rgba(200,149,58,0.2)' }}>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.75rem' }}>
-              Experience Live ERC-4337 Sponsorship
-            </h2>
-            <p style={{ color: '#8A8F9E', fontSize: '0.95rem', maxWidth: 580, margin: '0 auto 1.5rem auto' }}>
-              Trigger a real autonomous smart account execution on Arc Testnet. Watch the Auren Paymaster cover gas fees directly from the isolated DAppVault.
+      {/* ── SECTION 07: CONSUMER EXPERIENCE ───────────────────────── */}
+      <section style={{ padding: '8rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="editorial-container">
+
+          <div className="mono-meta" style={{ marginBottom: '1.5rem', color: '#C8953A' }}>
+            06 / Consumer Experience
+          </div>
+
+          <h2 className="section-title" style={{ maxWidth: 800, marginBottom: '3.5rem' }}>
+            Buy. Sign once. Gas covered.
+          </h2>
+
+          <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '3rem 2.5rem', background: '#0D111A', maxWidth: 640 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <span className="mono-meta">Demo Application</span>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#F8F6F2', marginTop: '0.25rem' }}>Premium Access Pass</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#F8F6F2' }}>10.00 USDC</div>
+                <div style={{ fontSize: '0.75rem', color: '#16A34A', fontWeight: 600 }}>Gas: Sponsored by Auren</div>
+              </div>
+            </div>
+
+            <p style={{ color: '#8A8F9E', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '2rem' }}>
+              The consumer signs one message in their wallet. The 10 USDC purchase routes directly to the application's vault; Auren covers 100% of network gas.
             </p>
-            <Link
-              href="/agent-demo"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '6px',
-                background: '#C8953A',
-                color: '#0A0D14',
-                fontWeight: 700,
-                fontSize: '0.92rem',
-                textDecoration: 'none',
-              }}
-            >
-              Open Live Execution Console →
+
+            <Link href="/demo" className="btn-primary" style={{ width: '100%' }}>
+              Try Consumer Demo →
             </Link>
           </div>
+
         </div>
       </section>
 
-      {/* ── FOOTER ──────────────────────────────────────────────── */}
-      <footer style={{ padding: '3rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', color: '#8A8F9E', fontSize: '0.85rem' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <LogoMark size={20} />
-            <span style={{ fontWeight: 700, color: '#F8F6F2', letterSpacing: '0.08em' }}>AUREN</span>
-            <span>— Arc Testnet Release Candidate</span>
+      {/* ── SECTION 08: DEVELOPERS ────────────────────────────────── */}
+      <section style={{ padding: '8rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#0D111A' }}>
+        <div className="editorial-container">
+
+          <div className="mono-meta" style={{ marginBottom: '1.5rem', color: '#C8953A' }}>
+            07 / Developer Integration
           </div>
 
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
-            <Link href="/users" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Users</Link>
-            <Link href="/build" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Developers</Link>
-            <Link href="/capital" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Capital</Link>
-            <Link href="/explore" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Explore</Link>
-            <Link href="/technocore" style={{ color: '#8A8F9E', textDecoration: 'none' }}>TechnoCore</Link>
-            <Link href="/brand" style={{ color: '#8A8F9E', textDecoration: 'none' }}>Brand</Link>
+          <h2 className="section-title" style={{ maxWidth: 800, marginBottom: '3.5rem' }}>
+            Give your application an economic engine.
+          </h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3rem', alignItems: 'center' }}>
+            <div>
+              <p style={{ fontSize: '1.0625rem', color: '#8A8F9E', lineHeight: 1.6, marginBottom: '2rem' }}>
+                Integrate gas sponsorship into any Arc application with the Auren TypeScript SDK. Define spending policies, register with isolated vaults, and automate 50/50 profit splitting.
+              </p>
+              <Link href="/build" className="btn-primary">
+                Build with Auren →
+              </Link>
+            </div>
+
+            <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '1.5rem', background: '#0A0D14', fontFamily: 'monospace', fontSize: '0.8125rem' }}>
+              <div style={{ color: '#8A8F9E', marginBottom: '0.5rem' }}>// Sponsor user action with Auren SDK</div>
+              <div style={{ color: '#E2B768' }}>import &#123; AurenSDK &#125; from &apos;sdk&apos;;</div>
+              <div style={{ color: '#F8F6F2', marginTop: '0.5rem' }}>const sdk = new AurenSDK(&#123; ... &#125;);</div>
+              <div style={{ color: '#F8F6F2' }}>const userOp = await sdk.buildUserOp(&#123;</div>
+              <div style={{ color: '#8A8F9E' }}>  sender: userSmartAccount,</div>
+              <div style={{ color: '#8A8F9E' }}>  target: dAppAddress,</div>
+              <div style={{ color: '#8A8F9E' }}>  callData: purchaseCallData</div>
+              <div style={{ color: '#F8F6F2' }}>&#125;);</div>
+              <div style={{ color: '#16A34A', marginTop: '0.5rem' }}>await sdk.sponsorAndSubmit(userOp);</div>
+            </div>
           </div>
+
         </div>
-      </footer>
+      </section>
+
+      {/* ── SECTION 09: CAPITAL ───────────────────────────────────── */}
+      <section style={{ padding: '8rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="editorial-container">
+
+          <div className="mono-meta" style={{ marginBottom: '1.5rem', color: '#C8953A' }}>
+            08 / Capital Infrastructure
+          </div>
+
+          <h2 className="section-title" style={{ maxWidth: 800, marginBottom: '3.5rem' }}>
+            Fund application growth.<br />
+            <span style={{ color: '#8A8F9E' }}>Measure recovery.</span>
+          </h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+            <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '1.75rem', background: '#0D111A' }}>
+              <span className="mono-meta">Capital Deployed</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#F8F6F2', marginTop: '0.5rem' }}>100% Isolated</div>
+              <div style={{ fontSize: '0.8125rem', color: '#8A8F9E', marginTop: '0.25rem' }}>Zero cross-pool risk</div>
+            </div>
+            <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '1.75rem', background: '#0D111A' }}>
+              <span className="mono-meta">Recovery Priority</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#C8953A', marginTop: '0.5rem' }}>Principal First</div>
+              <div style={{ fontSize: '0.8125rem', color: '#8A8F9E', marginTop: '0.25rem' }}>Mudarabah structure</div>
+            </div>
+            <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '1.75rem', background: '#0D111A' }}>
+              <span className="mono-meta">Profit Split</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#F8F6F2', marginTop: '0.5rem' }}>50 / 50</div>
+              <div style={{ fontSize: '0.8125rem', color: '#8A8F9E', marginTop: '0.25rem' }}>LP and Developer</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <span style={{ fontSize: '0.8125rem', color: '#8A8F9E' }}>
+              Risk Notice: Vault performance depends on DApp revenue on Arc Testnet. Capital recovery is not guaranteed.
+            </span>
+            <Link href="/capital" className="btn-secondary">
+              Explore Capital Vaults →
+            </Link>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── SECTION 10: FINAL STATEMENT ───────────────────────────── */}
+      <section style={{ padding: '10rem 0 8rem', textAlign: 'center', background: '#070A0F' }}>
+        <div className="editorial-container-narrow">
+
+          <h2 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 850, letterSpacing: '-0.04em', lineHeight: 1.05, color: '#F8F6F2', marginBottom: '2rem' }}>
+            Fund growth.<br />
+            Enable agents.
+          </h2>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '4rem' }}>
+            <Link href="/demo" className="btn-primary">
+              Try Auren →
+            </Link>
+            <Link href="/build" className="btn-secondary">
+              Build on Arc
+            </Link>
+          </div>
+
+          <div className="hairline-divider" style={{ marginBottom: '3rem' }} />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#8A8F9E', fontSize: '0.8125rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <LogoMark size={20} />
+              <span style={{ fontWeight: 800, color: '#F8F6F2', letterSpacing: '0.08em' }}>AUREN</span>
+              <span>· Arc Testnet (5042002)</span>
+            </div>
+            <div style={{ display: 'flex', gap: '1.5rem' }}>
+              <Link href="/demo" style={{ color: 'inherit', textDecoration: 'none' }}>Consumer Demo</Link>
+              <Link href="/agent-demo" style={{ color: 'inherit', textDecoration: 'none' }}>Agent Demo</Link>
+              <Link href="/build" style={{ color: 'inherit', textDecoration: 'none' }}>Developers</Link>
+              <Link href="/capital" style={{ color: 'inherit', textDecoration: 'none' }}>Capital</Link>
+            </div>
+          </div>
+
+        </div>
+      </section>
 
     </div>
   );
