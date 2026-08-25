@@ -31,7 +31,7 @@ export const DAPP_REGISTRY: Record<string, RegisteredDApp> = {
       ethers.id('purchaseItem()').slice(0, 10).toLowerCase()
     ],
     maxActionValueWei: ethers.parseEther('10.0'), // 10 USDC max purchase value
-    maxGasPerUserOpWei: ethers.parseEther('0.05'), // 0.05 USDC max gas
+    maxGasPerUserOpWei: ethers.parseEther('0.01'), // 0.01 USDC max gas
     dailyBudgetWei: ethers.parseEther('100.0'),     // 100 USDC daily budget
     active: true
   },
@@ -49,7 +49,7 @@ export const DAPP_REGISTRY: Record<string, RegisteredDApp> = {
       ethers.id('purchaseItem()').slice(0, 10).toLowerCase()
     ],
     maxActionValueWei: ethers.parseEther('10.0'),
-    maxGasPerUserOpWei: ethers.parseEther('0.05'),
+    maxGasPerUserOpWei: ethers.parseEther('0.01'),
     dailyBudgetWei: ethers.parseEther('100.0'),
     active: true
   }

@@ -31,10 +31,10 @@ async function runTests() {
         sender: "0x3333333333333333333333333333333333333333",
         nonce: 1,
         callData: validCallData,
-        callGasLimit: 200000,
-        verificationGasLimit: 350000,
-        preVerificationGas: 60000,
-        maxFeePerGas: ethers.parseUnits('30', 'gwei').toString(),
+        callGasLimit: 150000,
+        verificationGasLimit: 200000,
+        preVerificationGas: 50000,
+        maxFeePerGas: ethers.parseUnits('10', 'gwei').toString(),
         maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei').toString()
     };
 

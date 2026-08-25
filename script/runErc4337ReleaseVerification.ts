@@ -145,11 +145,12 @@ async function main() {
     nonce: Number(nonce),
     initCode,
     callData,
-    callGasLimit: 200000,
-    verificationGasLimit: 350000,
-    preVerificationGas: 60000,
-    maxFeePerGas: ethers.parseUnits('30', 'gwei').toString(),
+    callGasLimit: 150000,
+    verificationGasLimit: 200000,
+    preVerificationGas: 50000,
+    maxFeePerGas: ethers.parseUnits('10', 'gwei').toString(),
     maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei').toString(),
+    maxCost: ethers.parseEther('0.008').toString(),
     paymasterAndData: '0x',
     signature: '0x'
   };

@@ -103,6 +103,7 @@ export default function AgentDemoPage() {
   const [state, setState] = useState<ExecutionState>('idle');
   const [stepDetail, setStepDetail] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [maxSponsoredGas, setMaxSponsoredGas] = useState<string>('0.01');
 
   // Purchase Amount (Testnet native USDC)
   const [purchaseAmount, setPurchaseAmount] = useState<string>('0.05');
@@ -281,11 +282,32 @@ export default function AgentDemoPage() {
 
       // ── STEP 2: EVALUATING ─────────────────────────────────
       setState('evaluating');
-      setStepDetail(`Policy Engine evaluating sponsorship bounds for ${targetOpportunity.name}...`);
+      const maxCostLimitWei = targetOpportunity.maxGasPerUserOpWei || ethers.parseEther('0.01').toString();
+      const maxCostLimitUsdc = targetOpportunity.maxGasCostUsdc || ethers.formatEther(maxCostLimitWei);
+      setMaxSponsoredGas(maxCostLimitUsdc);
+
+      setStepDetail(`Policy Engine evaluating sponsorship bounds (${maxCostLimitUsdc} USDC limit) for ${targetOpportunity.name}...`);
 
       const dappInterface = new ethers.Interface(DAPP_ABI);
       const actionCallData = dappInterface.encodeFunctionData('purchaseItem');
-      const maxCostWei = ethers.parseEther('0.05').toString();
+
+      // Fetch dynamic network fee data to bound gas cost accurately
+      const feeData = await arcRpcProvider.getFeeData();
+      const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits('10', 'gwei');
+      const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits('2', 'gwei');
+
+      // Optimized gas limits for SimpleAccount.execute(DemoDApp.purchaseItem)
+      const callGasLimit = '150000';
+      const verificationGasLimit = '200000';
+      const preVerificationGas = '50000';
+
+      // Total gas envelope: (callGasLimit + 3 * verificationGasLimit + preVerificationGas) * maxFeePerGas
+      const gasUnitsTotal = BigInt(callGasLimit) + BigInt(verificationGasLimit) * 3n + BigInt(preVerificationGas);
+      const computedCostWei = gasUnitsTotal * BigInt(maxFeePerGas.toString());
+      const authoritativeLimitWei = BigInt(maxCostLimitWei);
+
+      // Ensure request never exceeds server-configured policy
+      const maxCostWei = computedCostWei <= authoritativeLimitWei ? computedCostWei.toString() : maxCostLimitWei;
 
       const policyRes = await fetch(getApiUrl('/agent/check-sponsorship'), {
         method: 'POST',
@@ -329,11 +351,12 @@ export default function AgentDemoPage() {
         nonce: nonce.toString(),
         initCode,
         callData: executeCallData,
-        callGasLimit: '200000',
-        verificationGasLimit: '350000',
-        preVerificationGas: '60000',
-        maxFeePerGas: ethers.parseUnits('30', 'gwei').toString(),
-        maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei').toString(),
+        callGasLimit,
+        verificationGasLimit,
+        preVerificationGas,
+        maxFeePerGas: maxFeePerGas.toString(),
+        maxPriorityFeePerGas: maxPriorityFeePerGas.toString(),
+        maxCost: maxCostWei,
         paymasterAndData: '0x',
         signature: '0x'
       };
@@ -533,10 +556,14 @@ export default function AgentDemoPage() {
               <div>
                 <div style={{ fontWeight: 700, fontSize: '1.125rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span>ERC-4337 Sponsored Execution</span>
-                  <span className="badge badge-green" style={{ fontSize: '0.6875rem' }}>Zero User Gas</span>
+                  <span className="badge badge-green" style={{ fontSize: '0.6875rem' }}>
+                    {executionResult ? '✓ Gas Sponsored by Auren' : 'Arc Testnet Sponsorship Eligible'}
+                  </span>
                 </div>
                 <div className="text-sm text-muted">
-                  Connected EOA derives Counterfactual Smart Account and signs UserOp; Auren Relayer & Paymaster settle on Arc.
+                  {executionResult
+                    ? 'Sponsored by Auren on Arc Testnet via Canonical EntryPoint v0.6.'
+                    : 'Eligible actions can be sponsored by Auren on Arc Testnet.'}
                 </div>
                 {smartAccount && (
                   <div style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--color-ink-700)', fontFamily: 'var(--font-mono)' }}>
@@ -603,8 +630,8 @@ export default function AgentDemoPage() {
             >
               <span style={{ fontSize: '1.125rem' }}>🛡️</span>
               <span>
-                <strong>Zero Gas Guarantee:</strong> Your connected wallet signs the UserOp intent.
-                Gas fees are paid directly by <strong>Auren InvestmentPaymaster (<code>0x2a412237…</code>)</strong> into Canonical EntryPoint v0.6 on <strong>Arc Testnet</strong>.
+                <strong>Gas Sponsorship Policy:</strong> Max sponsored gas: <strong>{maxSponsoredGas} USDC</strong> per action (configured by server policy).
+                Gas fees are covered directly by <strong>Auren InvestmentPaymaster (<code>0x2a412237…</code>)</strong> via Canonical EntryPoint v0.6 on <strong>Arc Testnet</strong>.
               </span>
             </div>
 
@@ -652,7 +679,7 @@ export default function AgentDemoPage() {
                   n: '02',
                   title: '2. Policy Evaluation',
                   desc: 'Policy Engine verifies selector whitelist, daily budget, and sender limits.',
-                  info: 'Action: purchaseItem() (0xef032d84) | Max Gas: 0.05 USDC',
+                  info: `Action: purchaseItem() (0xef032d84) | Max Gas Bound: ${maxSponsoredGas} USDC`,
                 },
                 {
                   id: 'building-userop' as ExecutionState,

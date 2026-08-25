@@ -36,10 +36,10 @@ async function runAdversarialTestSuite() {
     nonce: 0,
     initCode: '0x',
     callData: validCallData,
-    callGasLimit: 200000,
-    verificationGasLimit: 350000,
-    preVerificationGas: 60000,
-    maxFeePerGas: ethers.parseUnits('30', 'gwei').toString(),
+    callGasLimit: 150000,
+    verificationGasLimit: 200000,
+    preVerificationGas: 50000,
+    maxFeePerGas: ethers.parseUnits('10', 'gwei').toString(),
     maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei').toString()
   };
 
@@ -183,8 +183,8 @@ async function runAdversarialTestSuite() {
 
   // ── TEST 9: Daily Budget Exhaustion Enforcement ──────────────
   console.log('9. Testing daily budget exhaustion enforcement...');
-  // Force spend remaining budget so next action exceeds 100 USDC limit
-  defaultPolicyStore.atomicSpendBudget(validVault, ethers.parseEther('99.95'), ethers.parseEther('100.0'));
+  // Spend remaining budget so next action exceeds 100 USDC limit
+  defaultPolicyStore.atomicSpendBudget(validVault, ethers.parseEther('99.99'), ethers.parseEther('100.0'));
 
   const res9 = await request(app)
     .post('/sponsor')

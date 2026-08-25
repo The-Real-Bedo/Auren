@@ -28,6 +28,9 @@ export interface DAppOpportunity {
   chainId: number;
   lpProfitShareBps: number;
   recoveryModel: string;
+  maxGasPerUserOpWei: string;
+  maxGasCostUsdc: string;
+  dailyBudgetUsdc: string;
   active: boolean;
 }
 
@@ -83,6 +86,9 @@ export class AurenTools {
       chainId: 5042002,
       lpProfitShareBps: 5000,
       recoveryModel: 'Revenue-first principal recovery (Mudarabah-inspired)',
+      maxGasPerUserOpWei: '10000000000000000', // 0.01 USDC (10^16 wei)
+      maxGasCostUsdc: '0.01',
+      dailyBudgetUsdc: '100.0',
       active: true
     }
   ];
