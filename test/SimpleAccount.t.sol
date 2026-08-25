@@ -192,4 +192,92 @@ contract SimpleAccountTest is Test {
         assertEq(entryPoint.balanceOf(address(paymaster)), 2 ether);
         assertEq(address(vault).balance, vaultBalBefore + 3 ether);
     }
+
+    function test_PaymasterSignature_ExactMatch() public {
+        address userSa = address(0xCAFE);
+        UserOperation memory userOp;
+        userOp.sender = userSa;
+        userOp.nonce = 42;
+        userOp.callData = hex"ef032d84";
+        userOp.callGasLimit = 150000;
+        userOp.verificationGasLimit = 200000;
+        userOp.preVerificationGas = 50000;
+        userOp.maxFeePerGas = 10 gwei;
+
+        uint256 canonicalMaxCost = (userOp.callGasLimit + userOp.verificationGasLimit * 3 + userOp.preVerificationGas) * userOp.maxFeePerGas;
+
+        // Sign with backend signer
+        bytes32 pmHash = keccak256(abi.encode(userOp.sender, userOp.nonce, keccak256(userOp.callData), canonicalMaxCost, block.chainid));
+        bytes32 pmEthHash = MessageHashUtils.toEthSignedMessageHash(pmHash);
+        (uint8 pmV, bytes32 pmR, bytes32 pmS) = vm.sign(backendSignerKey, pmEthHash);
+        userOp.paymasterAndData = abi.encodePacked(address(paymaster), pmR, pmS, pmV);
+
+        // Verification MUST succeed with VALIDATION_SUCCESS (0)
+        vm.prank(address(entryPoint));
+        (, uint256 validationData) = paymaster.validatePaymasterUserOp(userOp, bytes32(0), canonicalMaxCost);
+        assertEq(validationData, 0, "Exact match paymaster signature must succeed");
+    }
+
+    function test_PaymasterSignature_FailsOnFieldMismatch() public {
+        address userSa = address(0xCAFE);
+        UserOperation memory userOp;
+        userOp.sender = userSa;
+        userOp.nonce = 42;
+        userOp.callData = hex"ef032d84";
+        userOp.callGasLimit = 150000;
+        userOp.verificationGasLimit = 200000;
+        userOp.preVerificationGas = 50000;
+        userOp.maxFeePerGas = 10 gwei;
+
+        uint256 canonicalMaxCost = (userOp.callGasLimit + userOp.verificationGasLimit * 3 + userOp.preVerificationGas) * userOp.maxFeePerGas;
+
+        // Sign with backend signer
+        bytes32 pmHash = keccak256(abi.encode(userOp.sender, userOp.nonce, keccak256(userOp.callData), canonicalMaxCost, block.chainid));
+        bytes32 pmEthHash = MessageHashUtils.toEthSignedMessageHash(pmHash);
+        (uint8 pmV, bytes32 pmR, bytes32 pmS) = vm.sign(backendSignerKey, pmEthHash);
+        userOp.paymasterAndData = abi.encodePacked(address(paymaster), pmR, pmS, pmV);
+
+        // Mutate callData after signature
+        userOp.callData = hex"deadbeef";
+
+        // Verification MUST FAIL with SIG_VALIDATION_FAILED (1)
+        vm.prank(address(entryPoint));
+        (, uint256 validationData) = paymaster.validatePaymasterUserOp(userOp, bytes32(0), canonicalMaxCost);
+        assertEq(validationData, 1, "Mutated callData must fail paymaster signature verification");
+
+        // Restore callData and mutate nonce
+        userOp.callData = hex"ef032d84";
+        userOp.nonce = 43;
+        vm.prank(address(entryPoint));
+        (, validationData) = paymaster.validatePaymasterUserOp(userOp, bytes32(0), canonicalMaxCost);
+        assertEq(validationData, 1, "Mutated nonce must fail paymaster signature verification");
+    }
+
+    function test_PaymasterSignature_FailsOnMaxCostOverride() public {
+        address userSa = address(0xCAFE);
+        UserOperation memory userOp;
+        userOp.sender = userSa;
+        userOp.nonce = 1;
+        userOp.callData = hex"ef032d84";
+        userOp.callGasLimit = 150000;
+        userOp.verificationGasLimit = 200000;
+        userOp.preVerificationGas = 50000;
+        userOp.maxFeePerGas = 10 gwei;
+
+        // EntryPoint computes requiredPreFund: (150k + 200k*3 + 50k) * 10 gwei = 0.008 ether
+        uint256 entryPointMaxCost = (userOp.callGasLimit + userOp.verificationGasLimit * 3 + userOp.preVerificationGas) * userOp.maxFeePerGas;
+
+        // Simulating the bug: backend signed with an overridden/hardcoded maxCost (e.g. 0.01 ether)
+        uint256 backendOverriddenMaxCost = 0.01 ether;
+
+        bytes32 wrongPmHash = keccak256(abi.encode(userOp.sender, userOp.nonce, keccak256(userOp.callData), backendOverriddenMaxCost, block.chainid));
+        bytes32 wrongPmEthHash = MessageHashUtils.toEthSignedMessageHash(wrongPmHash);
+        (uint8 pmV, bytes32 pmR, bytes32 pmS) = vm.sign(backendSignerKey, wrongPmEthHash);
+        userOp.paymasterAndData = abi.encodePacked(address(paymaster), pmR, pmS, pmV);
+
+        // When EntryPoint passes actual requiredPreFund (0.008 ether), signature verification MUST FAIL (reproducing AA34)
+        vm.prank(address(entryPoint));
+        (, uint256 validationData) = paymaster.validatePaymasterUserOp(userOp, bytes32(0), entryPointMaxCost);
+        assertEq(validationData, 1, "Signing wrong maxCost MUST cause AA34 signature error");
+    }
 }

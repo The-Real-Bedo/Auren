@@ -106,22 +106,18 @@ export class PerpetuaSDK {
     ): Promise<string> {
         if (!this.signer) throw new Error("Signer required");
 
-        let maxCost = userOp.maxCost;
-        if (maxCost === undefined && userOp.callGasLimit !== undefined && userOp.maxFeePerGas !== undefined) {
-            const callGas = BigInt(userOp.callGasLimit || 0);
-            const verGas = BigInt(userOp.verificationGasLimit || 0);
-            const preGas = BigInt(userOp.preVerificationGas || 0);
-            const maxFee = BigInt(userOp.maxFeePerGas || 0);
-            maxCost = (callGas + verGas * 3n + preGas) * maxFee;
-        } else {
-            maxCost = BigInt(maxCost || 0);
-        }
+        // Canonical calculation: MUST strictly match EntryPoint v0.6 requiredPreFund!
+        const callGas = BigInt(userOp.callGasLimit || 0);
+        const verGas = BigInt(userOp.verificationGasLimit || 0);
+        const preGas = BigInt(userOp.preVerificationGas || 0);
+        const maxFee = BigInt(userOp.maxFeePerGas || 0);
+        const maxCost = (callGas + verGas * 3n + preGas) * maxFee;
 
         // The hash structure matching the contract's `validatePaymasterUserOp`
         const abiCoder = new ethers.AbiCoder();
         const hash = ethers.keccak256(abiCoder.encode(
             ["address", "uint256", "bytes32", "uint256", "uint256"],
-            [userOp.sender, userOp.nonce, ethers.keccak256(userOp.callData), maxCost, chainId]
+            [userOp.sender, BigInt(userOp.nonce || 0), ethers.keccak256(userOp.callData), maxCost, BigInt(chainId)]
         ));
 
         // Sign the hash (verifying signer)

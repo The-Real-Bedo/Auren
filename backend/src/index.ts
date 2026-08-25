@@ -128,15 +128,12 @@ app.post('/sponsor', async (req: Request, res: Response): Promise<any> => {
       return res.status(429).json({ error: rateCheck.error });
     }
 
-    // Compute maxCost from gas fields or explicit maxCost
-    let maxCostWei = BigInt(userOp.maxCost || 0);
-    if (maxCostWei === 0n && userOp.callGasLimit && userOp.maxFeePerGas) {
-      const callGas = BigInt(userOp.callGasLimit);
-      const verGas = BigInt(userOp.verificationGasLimit || 0);
-      const preGas = BigInt(userOp.preVerificationGas || 0);
-      const maxFee = BigInt(userOp.maxFeePerGas);
-      maxCostWei = (callGas + verGas * 3n + preGas) * maxFee;
-    }
+    // Compute canonical maxCost from gas fields matching EntryPoint requiredPreFund
+    const callGas = BigInt(userOp.callGasLimit || 150000);
+    const verGas = BigInt(userOp.verificationGasLimit || 200000);
+    const preGas = BigInt(userOp.preVerificationGas || 50000);
+    const maxFee = BigInt(userOp.maxFeePerGas || ethers.parseUnits('10', 'gwei'));
+    const maxCostWei = (callGas + verGas * 3n + preGas) * maxFee;
 
     // 2. Strict Registry & Calldata Whitelist Verification (AUR-SEC-01)
     const validation = validateSponsorshipAgainstRegistry({
@@ -164,8 +161,8 @@ app.post('/sponsor', async (req: Request, res: Response): Promise<any> => {
       return res.status(429).json({ error: budgetSpend.error });
     }
 
-    // 4. Generate Cryptographic paymasterAndData
-    const signature = await sdk.signUserOp({ ...userOp, maxCost: maxCostWei }, paymasterAddress, Number(chainId));
+    // 4. Generate Cryptographic paymasterAndData with exact UserOp fields
+    const signature = await sdk.signUserOp(userOp, paymasterAddress, Number(chainId));
 
     return res.json({
       paymasterAndData: signature,
