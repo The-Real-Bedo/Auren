@@ -140,17 +140,31 @@ async function main() {
 
   const nonce = await entryPoint.getNonce(smartAccountAddress, 0);
 
+  const [feeData, latestBlock] = await Promise.all([
+    provider.getFeeData(),
+    provider.getBlock('latest').catch(() => null)
+  ]);
+  const baseFee = latestBlock?.baseFeePerGas || feeData.gasPrice || ethers.parseUnits('20', 'gwei');
+  const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits('1', 'gwei');
+  const dynamicMaxFee = (baseFee * 110n) / 100n + maxPriorityFeePerGas;
+  const maxFeePerGas = dynamicMaxFee > ethers.parseUnits('25', 'gwei') ? ethers.parseUnits('25', 'gwei') : dynamicMaxFee;
+
+  const callGasLimit = 100000;
+  const verificationGasLimit = isDeployed ? 80000 : 100000;
+  const preVerificationGas = 30000;
+  const computedMaxCost = (BigInt(callGasLimit) + BigInt(verificationGasLimit) * 3n + BigInt(preVerificationGas)) * maxFeePerGas;
+
   const unsignedUserOp = {
     sender: smartAccountAddress,
     nonce: Number(nonce),
     initCode,
     callData,
-    callGasLimit: 150000,
-    verificationGasLimit: 200000,
-    preVerificationGas: 50000,
-    maxFeePerGas: ethers.parseUnits('10', 'gwei').toString(),
-    maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei').toString(),
-    maxCost: ethers.parseEther('0.008').toString(),
+    callGasLimit,
+    verificationGasLimit,
+    preVerificationGas,
+    maxFeePerGas: maxFeePerGas.toString(),
+    maxPriorityFeePerGas: maxPriorityFeePerGas.toString(),
+    maxCost: computedMaxCost.toString(),
     paymasterAndData: '0x',
     signature: '0x'
   };

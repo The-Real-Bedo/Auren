@@ -292,22 +292,32 @@ export default function AgentDemoPage() {
       const actionCallData = dappInterface.encodeFunctionData('purchaseItem');
 
       // Fetch dynamic network fee data to bound gas cost accurately
-      const feeData = await arcRpcProvider.getFeeData();
-      const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits('10', 'gwei');
-      const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits('2', 'gwei');
+      const [feeData, latestBlock] = await Promise.all([
+        arcRpcProvider.getFeeData(),
+        arcRpcProvider.getBlock('latest').catch(() => null)
+      ]);
+      const baseFee = latestBlock?.baseFeePerGas || feeData.gasPrice || ethers.parseUnits('20', 'gwei');
+      const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits('1', 'gwei');
+      // Buffer of 10% over base fee + priority fee to guarantee inclusion without 2x inflation
+      const dynamicMaxFee = (baseFee * 110n) / 100n + maxPriorityFeePerGas;
+      const maxFeePerGas = dynamicMaxFee > ethers.parseUnits('25', 'gwei') ? ethers.parseUnits('25', 'gwei') : dynamicMaxFee;
 
-      // Optimized gas limits for SimpleAccount.execute(DemoDApp.purchaseItem)
-      const callGasLimit = '150000';
-      const verificationGasLimit = '200000';
-      const preVerificationGas = '50000';
+      // Safely optimized gas envelope derived from on-chain simulation:
+      // SimpleAccount.execute (92.5k gas) + safety margin -> 100k
+      const callGasLimit = '100000';
+      // SimpleAccount + InvestmentPaymaster validation -> 80k (100k if deploying)
+      const verificationGasLimit = isDeployed ? '80000' : '100000';
+      // Pre-verification overhead -> 30k
+      const preVerificationGas = '30000';
 
       // Total gas envelope: (callGasLimit + 3 * verificationGasLimit + preVerificationGas) * maxFeePerGas
       const gasUnitsTotal = BigInt(callGasLimit) + BigInt(verificationGasLimit) * 3n + BigInt(preVerificationGas);
-      const computedCostWei = gasUnitsTotal * BigInt(maxFeePerGas.toString());
+      const computedCostWei = gasUnitsTotal * maxFeePerGas;
       const authoritativeLimitWei = BigInt(maxCostLimitWei);
 
-      // Ensure request never exceeds server-configured policy
-      const maxCostWei = computedCostWei <= authoritativeLimitWei ? computedCostWei.toString() : maxCostLimitWei;
+      if (computedCostWei > authoritativeLimitWei) {
+        throw new Error("Current network fee estimate exceeds Auren's sponsorship limit. Please try again shortly.");
+      }
 
       const policyRes = await fetch(getApiUrl('/agent/check-sponsorship'), {
         method: 'POST',
@@ -317,7 +327,7 @@ export default function AgentDemoPage() {
           targetContract: targetOpportunity.targetContract,
           callData: actionCallData,
           sender: sa,
-          maxCost: maxCostWei,
+          maxCost: computedCostWei.toString(),
           chainId: ARC_TESTNET_CHAIN_ID,
         }),
       });
@@ -371,7 +381,7 @@ export default function AgentDemoPage() {
         preVerificationGas,
         maxFeePerGas: maxFeePerGas.toString(),
         maxPriorityFeePerGas: maxPriorityFeePerGas.toString(),
-        maxCost: maxCostWei,
+        maxCost: computedCostWei.toString(),
         paymasterAndData: '0x',
         signature: '0x'
       };
